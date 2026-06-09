@@ -109,9 +109,6 @@ export default function CodeShopPage() {
           </div>
         )}
       </div>
-
-      {/* Bottom Nav */}
-      
     </div>
   )
 }

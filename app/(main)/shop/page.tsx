@@ -13,8 +13,6 @@ export default function ShopPage() {
   const [codes, setCodes] = useState<any[]>([])
   const [banner, setBanner] = useState("")
   const [showMenu, setShowMenu] = useState(false)
-  // ຖ້າບໍ່ໄດ້ໃຊ້ showShopSheet ສາມາດລຶບອອກໄດ້ ເພື່ອບໍ່ໃຫ້ໜັກໂຄ້ດ
-  const [showShopSheet, setShowShopSheet] = useState(false) 
   
   // ✅ ແກ້ໄຂ Type ຂອງ useRef ໃຫ້ຖືກຕ້ອງຕາມມາດຕະຖານ React + TS
   const menuRef = useRef<HTMLDivElement>(null)
@@ -69,9 +67,7 @@ export default function ShopPage() {
 
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
-<span className="font-bold text-lg text-gray-900 dark:text-white tracking-tight">
-  Game Store
-</span>
+        <AnimatedTitle className="text-lg" />
         <div className="flex items-center gap-3">
           <ThemeToggle />
           {profile ? (

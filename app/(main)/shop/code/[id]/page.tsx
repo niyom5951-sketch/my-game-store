@@ -125,7 +125,7 @@ export default function CodeDetailPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-52">
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
         <button onClick={() => router.back()}
@@ -228,7 +228,7 @@ export default function CodeDetailPage() {
       </div>
 
       {/* ປຸ່ມຊື້ */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4">
+      <div className="fixed left-0 right-0 bottom-[calc(6.75rem+env(safe-area-inset-bottom))] z-30 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 shadow-[0_-10px_30px_rgba(15,23,42,0.08)]">
         <button
           onClick={handleBuy}
           disabled={buying || product.stock_left <= 0}

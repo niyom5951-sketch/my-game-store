@@ -23,19 +23,23 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // ໃຊ້ getUser() ເພື່ອບັງຄັບໃຫ້ Server ເຊັກ Token ໃໝ່ສະເໝີ ບໍ່ໃຫ້ໃຊ້ Cache ເກົ່າ
+  const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
-  const requiresAuth = [
+  // ເອົາ / ທາງທ້າຍອອກ ເພື່ອໃຫ້ມັນ Match ທັງແບບມີ ແລະ ບໍ່ມີ / ປິດທ້າຍ
+  const requiresAuthRoutes = [
     "/deposit",
     "/history",
     "/profile",
     "/admin",
-    "/shop/topup/",
-    "/shop/code/",
-  ].some((route) => path.startsWith(route))
+    "/shop/topup",
+    "/shop/code",
+  ]
+
+  const requiresAuth = requiresAuthRoutes.some((route) => 
+    path === route || path.startsWith(`${route}/`)
+  )
 
   if (requiresAuth && !user) {
     const loginUrl = new URL("/login", request.url)
@@ -58,13 +62,9 @@ export async function proxy(request: NextRequest) {
   return supabaseResponse
 }
 
+// 🛠️ ຈຸດປ່ຽນເກມ: ແກ້ Matcher ໃຫ້ຄຸມທຸກໜ້າ ເພື່ອປິດ Static Cache ຕອນ Deploy
 export const config = {
   matcher: [
-    "/deposit/:path*",
-    "/history/:path*",
-    "/profile/:path*",
-    "/admin/:path*",
-    "/shop/topup/:path*",
-    "/shop/code/:path*",
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

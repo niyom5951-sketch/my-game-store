@@ -17,3 +17,49 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.animated-site-title {
+  color: transparent;
+  background: linear-gradient(90deg, #111827 0%, #2563eb 48%, #059669 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  clip-path: inset(0 100% 0 0);
+  animation: site-title-reveal 4.8s ease-in-out infinite;
+}
+
+.dark .animated-site-title {
+  background: linear-gradient(90deg, #ffffff 0%, #7dd3fc 48%, #86efac 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+@keyframes site-title-reveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+
+  16% {
+    opacity: 1;
+  }
+
+  48%,
+  72% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+
+  100% {
+    clip-path: inset(0 0 0 100%);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-site-title {
+    animation: none;
+    clip-path: none;
+    opacity: 1;
+  }
+}
