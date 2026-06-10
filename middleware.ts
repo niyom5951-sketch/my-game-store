@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -23,7 +23,7 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // ໃຊ້ getUser() ເພື່ອບັງຄັບໃຫ້ Server ເຊັກ Token ໃໝ່ສະເໝີ ບໍ່ໃຫ້ໃຊ້ Cache ເກົ່າ
+  // ກວດສອບ User ໂດຍບັງຄັບໃຫ້ Server ເຊັກ Token ໃໝ່ສະໝີ (ປິດ Cache ບໍ່ໃຫ້ເວັບຫຼຸດ Login)
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
@@ -62,7 +62,7 @@ export async function proxy(request: NextRequest) {
   return supabaseResponse
 }
 
-// 🛠️ ຈຸດປ່ຽນເກມ: ແກ້ Matcher ໃຫ້ຄຸມທຸກໜ້າ ເພື່ອປິດ Static Cache ຕອນ Deploy
+// 🛠️ ຕັ້ງຄ່າ Matcher ໃຫ້ຄຸມທຸກໜ້າ ເພື່ອປິດ Static Cache ຕອນ Deploy ບໍ່ໃຫ້ເວັບຫຼຸດ Login
 export const config = {
   matcher: [
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
