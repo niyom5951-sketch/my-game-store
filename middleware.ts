@@ -41,11 +41,11 @@ export async function middleware(request: NextRequest) {
     path === route || path.startsWith(`${route}/`)
   )
 
-  if (requiresAuth && !user) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("next", path)
-    return NextResponse.redirect(loginUrl)
-  }
+  if (requiresAuth && !user && !path.startsWith('/login')) {
+  const loginUrl = new URL("/login", request.url)
+  loginUrl.searchParams.set("next", path)
+  return NextResponse.redirect(loginUrl)
+ }
 
   if (user && path.startsWith("/admin")) {
     const { data: profile } = await supabase
