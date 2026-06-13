@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // 1. ສ້າງ Response ຕັ້ງຕົ້ນເພື່ອເອົາໄວ້ແລກປ່ຽນ Cookie
   let response = NextResponse.next({
     request: {
