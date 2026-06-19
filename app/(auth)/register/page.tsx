@@ -42,6 +42,7 @@ export default function RegisterPage() {
 
     setLoading(false)
     if (signUpError) return setError(signUpError.message)
+    router.refresh()
     router.push("/")
   }
 

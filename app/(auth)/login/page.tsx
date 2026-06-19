@@ -36,6 +36,7 @@ export default function LoginPage() {
 
     setLoading(false)
     if (loginError) return setError("ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ")
+    router.refresh()
     router.push("/")
   }
 
