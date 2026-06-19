@@ -97,6 +97,64 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">ຕັ້ງຄ່າ</h1>
+      {/* ຕັ້ງຄ່າໜ້າຕາເວັບ */}
+ <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+   <h2 className="font-bold text-lg">🌐 ໜ້າຕາເວັບ (Tab & Logo)</h2>
+  
+   <div className="space-y-1">
+    <label className="text-xs font-semibold text-gray-400 uppercase">ຊື່ເວັບ (ສະແດງໃນ Tab)</label>
+    <input
+      placeholder="Game Store"
+      value={settings.site_name || ""}
+      onChange={e => setSettings({ ...settings, site_name: e.target.value })}
+      className="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-400"
+    />
+  </div>
+
+  <div className="space-y-1">
+    <label className="text-xs font-semibold text-gray-400 uppercase">ປະເພດ Favicon (Tab Icon)</label>
+    <div className="flex gap-3">
+      <button
+        onClick={() => setSettings({ ...settings, site_favicon_type: "name" })}
+        className={`flex-1 py-2 rounded-xl font-bold text-sm border-2 transition ${
+          settings.site_favicon_type === "name" || !settings.site_favicon_type
+            ? "border-blue-500 bg-blue-50 text-blue-600"
+            : "border-gray-200 text-gray-400"
+        }`}
+      >
+        🔤 ໃຊ້ຊື່ເວັບ
+      </button>
+      <button
+        onClick={() => setSettings({ ...settings, site_favicon_type: "logo" })}
+        className={`flex-1 py-2 rounded-xl font-bold text-sm border-2 transition ${
+          settings.site_favicon_type === "logo"
+            ? "border-blue-500 bg-blue-50 text-blue-600"
+            : "border-gray-200 text-gray-400"
+        }`}
+      >
+        🖼️ ໃຊ້ Logo URL
+      </button>
+    </div>
+  </div>
+
+  {settings.site_favicon_type === "logo" && (
+    <div className="space-y-2">
+      <label className="text-xs font-semibold text-gray-400 uppercase">URL Logo (32x32 png/ico)</label>
+      <input
+        placeholder="https://example.com/logo.png"
+        value={settings.site_logo_url || ""}
+        onChange={e => setSettings({ ...settings, site_logo_url: e.target.value })}
+        className="w-full border rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-400"
+      />
+      {settings.site_logo_url && settings.site_logo_url !== "EMPTY" && (
+        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+          <img src={settings.site_logo_url} className="w-8 h-8 rounded object-contain" />
+          <span className="text-xs text-gray-400">Preview favicon</span>
+        </div>
+      )}
+    </div>
+  )}
+</div>
 
       {/* ທະນາຄານ */}
       <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
