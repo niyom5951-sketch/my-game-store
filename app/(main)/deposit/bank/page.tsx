@@ -52,71 +52,82 @@ export default function BankDepositPage() {
     qr: bankInfo.bank_ldb_qr_url,
   }
 
-  async function handleCreateOrder() {
-    setError("")
-    const num = parseInt(amount)
-    if (!num || num < 3000) return setError("ຂັ້ນຕ່ຳ 3,000 ກີບ")
-    setLoading(true)
-    const supabase = createClient()
-    const { data, error: err } = await supabase
-      .from("deposit_orders")
-      .insert({
-        user_id: userId,
-        method: "bank",
-        amount_requested: num,
-        amount_received: num,
-        fee_percent: 0,
-        status: "pending",
-        admin_note: `ທະນາຄານ: ${bank.name}`
-      })
-      .select().single()
-
-    setLoading(false)
-    if (err) return setError("ເກີດຂໍ້ຜິດພາດ")
-    setOrderId(data.id)
-    setStep(2)
-    await fetch("/api/discord", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: `💰 **ເຕີມເງິນໃໝ່** (ທະນາຄານ)\n👤 ຜູ້ໃຊ້: ${userId}\n💵 ຈຳນວນ: ${parseInt(amount).toLocaleString()} ກີບ\n🏦 ທະນາຄານ: ${bank.name}`
-      })
-    })
+  function handleCreateOrder() {
+  setError("")
+  const num = parseInt(amount)
+  if (!num || num < 3000) return setError("ຂັ້ນຕ່ຳ 3,000 ກີບ")
+  setStep(2)
   }
 
   async function handleUploadSlip() {
-    if (!slipFile) return setError("ກະລຸນາແນບສະລິບ")
-    setError("")
-    setLoading(true)
-    const supabase = createClient()
-    const hashBuffer = await crypto.subtle.digest("SHA-256", await slipFile.arrayBuffer())
-    const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("")
-    const hashCheck = await fetch("/api/deposit/slip-hash", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hash })
-    })
-    const hashResult = await hashCheck.json()
-    if (!hashCheck.ok) {
-      setLoading(false)
-      return setError(hashResult.error || "ກວດສະລິບບໍ່ສຳເລັດ")
-    }
-    if (hashResult.exists) {
-      setLoading(false)
-      return setError("ສະລິບນີ້ຖືກໃຊ້ແລ້ວ")
-    }
-    const ext = slipFile.name.split('.').pop()
-    const filename = `${userId}/${Date.now()}.${ext}`
-    const { error: uploadErr } = await supabase.storage.from("slips").upload(filename, slipFile)
-    if (uploadErr) {
-      setLoading(false)
-      return setError("Upload ບໍ່ສຳເລັດ: " + uploadErr.message)
-    }
-    const { data: urlData } = supabase.storage.from("slips").getPublicUrl(filename)
-    await supabase.from("deposit_orders").update({ slip_url: urlData.publicUrl, slip_hash: hash }).eq("id", orderId)
+  if (!slipFile) return setError("ກະລຸນາແນບສະລິບ")
+  setError("")
+  setLoading(true)
+  const supabase = createClient()
+
+  // ກວດ hash ສະລິບກ່ອນ
+  const hashBuffer = await crypto.subtle.digest("SHA-256", await slipFile.arrayBuffer())
+  const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("")
+  const hashCheck = await fetch("/api/deposit/slip-hash", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hash })
+  })
+  const hashResult = await hashCheck.json()
+  if (!hashCheck.ok) {
     setLoading(false)
-    setStep(3)
+    return setError(hashResult.error || "ກວດສະລິບບໍ່ສຳເລັດ")
   }
+  if (hashResult.exists) {
+    setLoading(false)
+    return setError("ສະລິບນີ້ຖືກໃຊ້ແລ້ວ")
+  }
+
+  // ✅ ສ້າງ order ຫຼັງຈາກກວດສະລິບຜ່ານແລ້ວ
+  const num = parseInt(amount)
+  const { data: order, error: createErr } = await supabase
+    .from("deposit_orders")
+    .insert({
+      user_id: userId,
+      method: "bank",
+      amount_requested: num,
+      amount_received: num,
+      fee_percent: 0,
+      status: "pending",
+      admin_note: `ທະນາຄານ: ${bank.name}`
+    })
+    .select().single()
+
+  if (createErr || !order) {
+    setLoading(false)
+    return setError("ເກີດຂໍ້ຜິດພາດ ກະລຸນາລອງໃໝ່")
+  }
+
+  // upload ສະລິບ
+  const ext = slipFile.name.split('.').pop()
+  const filename = `${userId}/${Date.now()}.${ext}`
+  const { error: uploadErr } = await supabase.storage.from("slips").upload(filename, slipFile)
+  if (uploadErr) {
+    setLoading(false)
+    return setError("Upload ບໍ່ສຳເລັດ: " + uploadErr.message)
+  }
+
+  const { data: urlData } = supabase.storage.from("slips").getPublicUrl(filename)
+  await supabase.from("deposit_orders").update({ slip_url: urlData.publicUrl, slip_hash: hash }).eq("id", order.id)
+
+  // ແຈ້ງເຕືອນ Discord ຫຼັງສ້າງ order ສຳເລັດ
+  await fetch("/api/discord", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: `💰 **ເຕີມເງິນໃໝ່** (ທະນາຄານ)\n👤 ຜູ້ໃຊ້: ${userId}\n💵 ຈຳນວນ: ${num.toLocaleString()} ກີບ\n🏦 ທະນາຄານ: ${bank.name}`
+    })
+  })
+
+  setOrderId(order.id)
+  setLoading(false)
+  setStep(3)
+ }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
