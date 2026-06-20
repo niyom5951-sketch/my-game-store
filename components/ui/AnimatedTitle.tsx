@@ -1,9 +1,13 @@
-const TITLE = "Game Store"
-
-export default function AnimatedTitle({ className = "" }: { className?: string }) {
+export default function AnimatedTitle({ 
+  className = "", 
+  title = "Game Store" 
+}: { 
+  className?: string
+  title?: string 
+}) {
   return (
-    <span aria-label={TITLE} className={`animated-site-title inline-block whitespace-nowrap font-black tracking-normal ${className}`}>
-      {TITLE}
+    <span aria-label={title} className={`animated-site-title inline-block whitespace-nowrap font-black tracking-normal ${className}`}>
+      {title}
     </span>
   )
 }

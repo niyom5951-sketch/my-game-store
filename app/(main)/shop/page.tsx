@@ -13,6 +13,7 @@ export default function ShopPage() {
   const [codes, setCodes] = useState<any[]>([])
   const [banner, setBanner] = useState("")
   const [showMenu, setShowMenu] = useState(false)
+  const [siteName, setSiteName] = useState("Game Store")
   
   // ✅ ແກ້ໄຂ Type ຂອງ useRef ໃຫ້ຖືກຕ້ອງຕາມມາດຕະຖານ React + TS
   const menuRef = useRef<HTMLDivElement>(null)
@@ -33,11 +34,17 @@ export default function ShopPage() {
       }
 
       // ດຶງຂໍ້ມູນແບບຂະໜານ (Parallel) ເຮັດໄດ້ດີແລ້ວ
-      const [g, c, s] = await Promise.all([
-        supabase.from("games").select("*").eq("is_active", true).order("sort_order"),
-        supabase.from("products").select("*").in("category", ["code", "account"]).eq("is_active", true).order("created_at", { ascending: false }),
-        supabase.from("settings").select("value").eq("key", "banner_url").maybeSingle()
-      ])
+      const [g, c, s, sn] = await Promise.all([
+     supabase.from("games").select("*").eq("is_active", true).order("sort_order"),
+     supabase.from("products").select("*").in("category", ["code", "account"]).eq("is_active", true).order("created_at", { ascending: false }),
+     supabase.from("settings").select("value").eq("key", "banner_url").maybeSingle(),
+     supabase.from("settings").select("value").eq("key", "site_name").maybeSingle()
+     ])
+
+     setGames(g.data || [])
+     setCodes(c.data || [])
+     if (s.data) setBanner(s.data.value)
+     if (sn.data?.value) setSiteName(sn.data.value)
       
       setGames(g.data || [])
       setCodes(c.data || [])
@@ -67,7 +74,7 @@ export default function ShopPage() {
 
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
-        <AnimatedTitle className="text-lg" />
+        <AnimatedTitle className="text-lg" title={siteName} />
         <div className="flex items-center gap-3">
           <ThemeToggle />
           {profile ? (
