@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import ThemeToggle from "@/components/ui/ThemeToggle"
 import AnimatedTitle from "@/components/ui/AnimatedTitle"
+import AuthModal from "@/components/auth/AuthModal"
 
 export default function ShopPage() {
   const router = useRouter()
@@ -14,9 +15,8 @@ export default function ShopPage() {
   const [banner, setBanner] = useState("")
   const [showMenu, setShowMenu] = useState(false)
   const [siteName, setSiteName] = useState("Game Store")
-  
-  // ✅ ແກ້ໄຂ Type ຂອງ useRef ໃຫ້ຖືກຕ້ອງຕາມມາດຕະຖານ React + TS
   const menuRef = useRef<HTMLDivElement>(null)
+  const [showAuth, setShowAuth] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -134,11 +134,12 @@ export default function ShopPage() {
               </div>
             </div>
           ) : (
-            <Link href="/login">
-              <button className="bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl">
-                ເຂົ້າສູ່ລະບົບ
-              </button>
-            </Link>
+            <button
+              onClick={() => setShowAuth(true)}
+              className="bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl"
+            >
+              ເຂົ້າສູ່ລະບົບ
+            </button>
           )}
         </div>
       </div>
@@ -238,6 +239,7 @@ export default function ShopPage() {
                         ຊື້
                       </button>
                     </Link>
+                    <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
                   </div>
                 </div>
               ))}
