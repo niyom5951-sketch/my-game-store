@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { createClient } from "@/lib/supabase/server"
+import { ToastProvider } from "@/components/ui/Toast"
 
 async function getSiteSettings() {
   try {
@@ -28,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const icons =
     faviconType === "logo" && logoUrl && logoUrl !== "EMPTY"
       ? { icon: logoUrl }
-      : { icon: "/favicon.ico" } // default
+      : { icon: "/favicon.ico" }
 
   return {
     title: siteName,
@@ -65,7 +66,9 @@ export default function RootLayout({
         style={{ fontFamily: "'Noto Sans Lao', sans-serif" }}
         className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white transition-colors"
       >
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   )
