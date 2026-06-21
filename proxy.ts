@@ -1,13 +1,18 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// ✅ ປ່ຽນຈາກ "middleware" → "proxy"
 export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   const path = request.nextUrl.pathname
-  const publicPaths = ['/login', '/register']
+
+  // ✅ ສະເພາະໜ້າເຫຼົ່ານີ້ເທົ່ານັ້ນທີ່ບັງຄັບ login
+  const protectedPaths = ['/admin', '/deposit', '/profile', '/history']
+  const isProtected = protectedPaths.some(p => path.startsWith(p))
+
+  // ໜ້າທີ່ login ແລ້ວບໍ່ຄວນກັບເຂົ້າໄປອີກ
+  const publicOnlyPaths = ['/login', '/register']
 
   if (!supabaseUrl || !supabaseKey) {
     console.error('Missing Supabase ENV variables!')
@@ -47,19 +52,24 @@ export async function proxy(request: NextRequest) {
     user = data?.user ?? null
   } catch (e) {
     console.error('Auth check failed:', e)
-    if (!publicPaths.includes(path)) {
-      return NextResponse.redirect(new URL('/login', request.url))
+    // ຖ້າກວດ auth ບໍ່ໄດ້ ແລະ ເປັນໜ້າທີ່ຕ້ອງປ້ອງກັນ -> ສົ່ງໄປ login
+    if (isProtected) {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('next', path)
+      return NextResponse.redirect(loginUrl)
     }
     return response
   }
 
-  if (!user && !publicPaths.includes(path)) {
+  // ✅ ບໍ່ໄດ້ login ແລະ ກຳລັງເຂົ້າໜ້າທີ່ຕ້ອງປ້ອງກັນ -> ສົ່ງໄປ login
+  if (!user && isProtected) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', path)
     return NextResponse.redirect(loginUrl)
   }
 
-  if (user && publicPaths.includes(path)) {
+  // ✅ login ແລ້ວ ແຕ່ພະຍາຍາມເຂົ້າ /login ຫຼື /register -> ສົ່ງກັບໜ້າຫຼັກ
+  if (user && publicOnlyPaths.includes(path)) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 

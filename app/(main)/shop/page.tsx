@@ -134,12 +134,11 @@ export default function ShopPage() {
               </div>
             </div>
           ) : (
-            <button
-              onClick={() => setShowAuth(true)}
-              className="bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl"
-            >
-              ເຂົ້າສູ່ລະບົບ
-            </button>
+            <Link href="/login">
+             <button className="bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl">
+             ເຂົ້າສູ່ລະບົບ
+             </button>
+          </Link>
           )}
         </div>
       </div>
@@ -239,7 +238,6 @@ export default function ShopPage() {
                         ຊື້
                       </button>
                     </Link>
-                    <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
                   </div>
                 </div>
               ))}
