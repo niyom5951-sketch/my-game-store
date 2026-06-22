@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import ThemeToggle from "@/components/ui/ThemeToggle"
 import { useToast } from "@/components/ui/Toast"
+import AnimatedTitle from "@/components/ui/AnimatedTitle"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -67,8 +68,8 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
       {/* Navbar */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
-        <Link href="/" className="font-black text-lg text-gray-900 dark:text-white">
-          🎮 {siteName}
+        <Link href="/">
+         <AnimatedTitle className="text-lg" title={siteName} />
         </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />
