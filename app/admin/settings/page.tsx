@@ -1,6 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import BannerManager from "@/components/admin/BannerManager"
+
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<any>({})
@@ -97,6 +99,7 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">ຕັ້ງຄ່າ</h1>
+      <BannerManager />
       {/* ຕັ້ງຄ່າໜ້າຕາເວັບ */}
  <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
    <h2 className="font-bold text-lg">🌐 ໜ້າຕາເວັບ (Tab & Logo)</h2>

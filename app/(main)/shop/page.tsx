@@ -5,26 +5,24 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import ThemeToggle from "@/components/ui/ThemeToggle"
 import AnimatedTitle from "@/components/ui/AnimatedTitle"
-import AuthModal from "@/components/auth/AuthModal"
 
 export default function ShopPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
   const [games, setGames] = useState<any[]>([])
   const [codes, setCodes] = useState<any[]>([])
-  const [banner, setBanner] = useState("")
+  const [banners, setBanners] = useState<any[]>([])
+  const [bannerIndex, setBannerIndex] = useState(0)
   const [showMenu, setShowMenu] = useState(false)
   const [siteName, setSiteName] = useState("Game Store")
   const menuRef = useRef<HTMLDivElement>(null)
-  const [showAuth, setShowAuth] = useState(false)
 
   useEffect(() => {
     async function load() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (user) {
-        // ✅ ປ່ຽນຈາກ .single() ເປັນ .maybeSingle() ເພື່ອປ້ອງກັນ error ຖ້າບໍ່ມີ profile
         const { data: prof } = await supabase
           .from("profiles")
           .select("username, balance, role")
@@ -33,28 +31,21 @@ export default function ShopPage() {
         setProfile(prof)
       }
 
-      // ດຶງຂໍ້ມູນແບບຂະໜານ (Parallel) ເຮັດໄດ້ດີແລ້ວ
-      const [g, c, s, sn] = await Promise.all([
-     supabase.from("games").select("*").eq("is_active", true).order("sort_order"),
-     supabase.from("products").select("*").in("category", ["code", "account"]).eq("is_active", true).order("created_at", { ascending: false }),
-     supabase.from("settings").select("value").eq("key", "banner_url").maybeSingle(),
-     supabase.from("settings").select("value").eq("key", "site_name").maybeSingle()
-     ])
+      const [g, c, b, sn] = await Promise.all([
+        supabase.from("games").select("*").eq("is_active", true).order("sort_order"),
+        supabase.from("products").select("*").in("category", ["code", "account"]).eq("is_active", true).order("created_at", { ascending: false }),
+        supabase.from("banners").select("*").eq("is_active", true).order("sort_order"),
+        supabase.from("settings").select("value").eq("key", "site_name").maybeSingle()
+      ])
 
-     setGames(g.data || [])
-     setCodes(c.data || [])
-     if (s.data) setBanner(s.data.value)
-     if (sn.data?.value) setSiteName(sn.data.value)
-      
       setGames(g.data || [])
       setCodes(c.data || [])
-      if (s.data) setBanner(s.data.value)
+      setBanners(b.data || [])
+      if (sn.data?.value) setSiteName(sn.data.value)
     }
     load()
 
-    // ປິດ menu ເມື່ອກົດນອກ
     function handleClick(e: MouseEvent) {
-      // ✅ ແກ້ໄຂໂດຍການເຕີມ `as Node` ເພື່ອໃຫ້ TypeScript ເຂົ້າໃຈ
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowMenu(false)
       }
@@ -62,6 +53,15 @@ export default function ShopPage() {
     document.addEventListener("mousedown", handleClick)
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
+
+  // Auto slide banner
+  useEffect(() => {
+    if (banners.length <= 1) return
+    const interval = setInterval(() => {
+      setBannerIndex(prev => (prev + 1) % banners.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [banners])
 
   async function handleLogout() {
     const supabase = createClient()
@@ -82,7 +82,6 @@ export default function ShopPage() {
               <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                 {profile.balance?.toLocaleString()} ກີບ
               </span>
-              {/* Avatar + Dropdown */}
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setShowMenu(!showMenu)}
@@ -91,10 +90,8 @@ export default function ShopPage() {
                   {profile.username?.[0]?.toUpperCase() || "U"}
                 </button>
 
-                {/* Dropdown Menu */}
                 {showMenu && (
                   <div className="absolute right-0 top-11 w-52 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden z-50">
-                    {/* User Info */}
                     <div className="px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-100 dark:border-gray-800">
                       <p className="font-bold text-sm text-gray-900 dark:text-white">{profile.username}</p>
                       <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-0.5">
@@ -102,7 +99,6 @@ export default function ShopPage() {
                       </p>
                     </div>
 
-                    {/* Menu Items */}
                     {[
                       { href: "/deposit", label: "ເຕີມເງິນ", icon: "M12 4v16m8-8H4" },
                       { href: "/shop/topup", label: "ເຕີມເກມ", icon: "M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.4.959.4v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 01-.61-.58v0z" },
@@ -135,22 +131,50 @@ export default function ShopPage() {
             </div>
           ) : (
             <Link href="/login">
-             <button className="bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl">
-             ເຂົ້າສູ່ລະບົບ
-             </button>
-          </Link>
+              <button className="bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl">
+                ເຂົ້າສູ່ລະບົບ
+              </button>
+            </Link>
           )}
         </div>
       </div>
 
       <div className="p-4 space-y-6">
-        {/* Banner */}
-        <div className="rounded-2xl overflow-hidden">
-          {banner ? (
-            <img src={banner} alt="banner" className="w-full h-44 object-cover" />
+        {/* Banner Carousel */}
+        <div className="rounded-2xl overflow-hidden relative">
+          {banners.length > 0 ? (
+            <div className="relative w-full h-44">
+              {banners.map((b, i) => (
+                <div
+                  key={b.id}
+                  className={`absolute inset-0 transition-opacity duration-700 ${i === bannerIndex ? "opacity-100" : "opacity-0"}`}
+                >
+                  {b.link_url ? (
+                    <a href={b.link_url} target="_blank" rel="noopener noreferrer">
+                      <img src={b.image_url} alt={b.title || "banner"} className="w-full h-44 object-cover" />
+                    </a>
+                  ) : (
+                    <img src={b.image_url} alt={b.title || "banner"} className="w-full h-44 object-cover" />
+                  )}
+                </div>
+              ))}
+
+              {/* Dots */}
+              {banners.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                  {banners.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setBannerIndex(i)}
+                      className={`rounded-full transition-all duration-300 ${i === bannerIndex ? "w-4 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/50"}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             <div className="w-full h-44 bg-gradient-to-r from-blue-600 to-violet-600 flex items-center justify-center rounded-2xl">
-              <p className="text-white font-bold text-2xl tracking-wide">Game Store</p>
+              <p className="text-white font-bold text-2xl tracking-wide">{siteName}</p>
             </div>
           )}
         </div>
