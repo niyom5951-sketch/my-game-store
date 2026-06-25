@@ -8,7 +8,7 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   // ✅ ສະເພາະໜ້າເຫຼົ່ານີ້ເທົ່ານັ້ນທີ່ບັງຄັບ login
-  const protectedPaths = ['/admin', '/deposit', '/profile', '/history']
+  const protectedPaths = ['/admin', '/deposit', '/profile', '/history', '/shop/topup', '/shop/code']
   const isProtected = protectedPaths.some(p => path.startsWith(p))
 
   // ໜ້າທີ່ login ແລ້ວບໍ່ຄວນກັບເຂົ້າໄປອີກ
