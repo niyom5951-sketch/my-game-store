@@ -69,7 +69,7 @@ export default function RegisterPage() {
       {/* Navbar */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
         <Link href="/">
-         <AnimatedTitle className="text-lg" title={siteName} />
+         <AnimatedTitle key={siteName} className="text-lg" title={siteName} />
         </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />
