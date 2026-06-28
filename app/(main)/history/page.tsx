@@ -13,7 +13,6 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState("")
   
-  // ຕົວປ່ຽນສຳລັບເກັບຂໍ້ມູນລາຍການທີ່ຖືກເລືອກເພື່ອສະແດງໃນ Popup (Modal)
   const [selectedItem, setSelectedItem] = useState<any>(null)
 
   useEffect(() => {
@@ -23,7 +22,6 @@ export default function HistoryPage() {
       if (!user) return
       setUserId(user.id)
 
-      // ດຶງຂໍ້ມູນ ແລະ ຮຽງລໍາດັບຈາກຫຼ້າສຸດຢູ່ເທິງສຸດ (created_at desc)
       const [dep, top, cod] = await Promise.all([
         supabase.from("deposit_orders").select("*")
           .eq("user_id", user.id).order("created_at", { ascending: false }),
@@ -51,7 +49,7 @@ export default function HistoryPage() {
     }
     const s = map[status] || { text: status, color: "bg-gray-500/10 text-gray-500" }
     return (
-      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${s.color}`}>
+      <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${s.color}`}>
         {s.text}
       </span>
     )
@@ -66,18 +64,45 @@ export default function HistoryPage() {
 
   function MethodLabel({ method }: { method: string }) {
     const map: any = {
-      bank: "ໂອນຜ່ານທະນາຄານ",
+      bank: "👑 ໂອນຜ່ານທະນາຄານ", // ຖ້າບໍ່ເອົາອີໂມຈິອອກໝົດ ສາມາດລຶບອອກໄດ້ເລີຍເດີ້
+      bank_pure: "ໂອນຜ່ານທະນາຄານ",
       phone_transfer: "ໂອນບັດໂທລະສັບ",
       card: "ເລກບັດ",
       code: "ໂຄ້ດລາງວັນ"
     }
+    const pureMap: any = {
+      bank: "👑 ໂອນຜ່ານທະນາຄານ",
+      phone_transfer: "ໂອນບັດໂທລະສັບ",
+      card: "ເລກບັດ",
+      code: "ໂຄ້ດລາງວັນ"
+    }
+    return <span>{method === "bank" ? "💡 ໂອນຜ່ານທະນາຄານ" : pureMap[method] || method}</span>
+  }
+
+  // ຟັງຊັນແປງຊື່ແບບບໍ່ມີອີໂມຈິແທ້ໆ
+  function PureMethodLabel({ method }: { method: string }) {
+    const map: any = {
+      bank: "💡 ໂອນຜ່ານທະນາຄານ",
+      phone_transfer: "ໂອນບັດໂທລະສັບ",
+      card: "ເລກບັດ",
+      code: "ໂຄ້ດລາງວັນ"
+    }
+    const cleanMap: any = {
+      bank: "💡 ໂອນຜ່ານທະນາຄານ",
+      phone_transfer: "ໂອນບັດໂທລະສັບ",
+      card: "ເລກບັດ",
+      code: "ໂຄ້ດລາງວັນ"
+    }
+    // ແກ້ໄຂຂໍ້ຄວາມໃຫ້ຄີນ (Clean text)
+    if(method === "bank") return <span>ໂອນຜ່ານທະນາຄານ</span>
+    if(method === "phone_transfer") return <span>ໂອນບັດໂທລະສັບ</span>
     return <span>{map[method] || method}</span>
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white pb-24 transition-colors duration-300">
       
-      {/* Header ແບບລຽບຫູລຽບຕາ */}
+      {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-gray-900 dark:to-gray-800 px-4 py-8 text-white shadow-lg relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:16px_16px]"></div>
         <div className="max-w-xl mx-auto flex items-center gap-3 relative z-10">
@@ -95,12 +120,12 @@ export default function HistoryPage() {
 
       <div className="max-w-xl mx-auto p-4 space-y-5 mt-2">
         
-        {/* Tabs ເມນູປ່ຽນປະຫວັດ */}
+        {/* Tabs */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl p-1.5 shadow-md flex border border-gray-100 dark:border-gray-800/60">
           {[
             { key: "deposit", label: "ເຕີມເງິນ" },
             { key: "topup", label: "ເຕີມເກມ" },
-            { key: "code", label: "ຊື້ລະຫັດ" },
+            { key: "code", label: "ຊື້ລະหັດ" },
           ].map(t => (
             <button
               key={t.key}
@@ -116,7 +141,7 @@ export default function HistoryPage() {
           ))}
         </div>
 
-        {/* ສະຖານະໂຫຼດຂໍ້ມູນ */}
+        {/* ລາຍການປະຫວັດ */}
         {loading ? (
           <div className="flex flex-col justify-center items-center py-24 space-y-3">
             <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -131,14 +156,15 @@ export default function HistoryPage() {
                 <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 text-xs">ຍັງບໍ່ມີປະຫວັດການເຕີມເງິນ</div>
               ) : deposits.map((d) => (
                 <div key={d.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800/60 flex items-center justify-between hover:shadow-md transition-all duration-200">
-                  <div className="space-y-1">
-                    <div className="text-xs font-bold text-gray-900 dark:text-white"><MethodLabel method={d.method} /></div>
+                  <div className="space-y-1 pr-2">
+                    <div className="text-xs font-bold text-gray-900 dark:text-white"><PureMethodLabel method={d.method} /></div>
                     <div className="text-[11px] text-gray-400 font-medium">{formatDate(d.created_at)}</div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div className="text-xs font-black text-blue-600 dark:text-blue-400">+{d.amount_requested?.toLocaleString()} ກີບ</div>
-                      <div className="text-[10px] text-gray-400"><StatusBadge status={d.status} /></div>
+                  {/* 🛠️ ບ່ອນແກ້ໄຂ: ຈັດ layout ໃຫ້ສະຖານະ ແລະ ລາຄາແຍກກັນຊັດເຈນ ບໍ່ທັບກັນ */}
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex flex-col items-end space-y-1.5">
+                      <span className="text-xs font-black text-blue-600 dark:text-blue-400">+{d.amount_requested?.toLocaleString()} ກີບ</span>
+                      <StatusBadge status={d.status} />
                     </div>
                     <button onClick={() => setSelectedItem({ ...d, type: "deposit" })} className="p-2 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 text-gray-400 hover:text-blue-600 transition-colors">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -154,15 +180,16 @@ export default function HistoryPage() {
                 <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 text-xs">ຍັງບໍ່ມີປະຫວັດການເຕີມເກມ</div>
               ) : topups.map((t) => (
                 <div key={t.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800/60 flex items-center justify-between hover:shadow-md transition-all duration-200">
-                  <div className="space-y-1">
+                  <div className="space-y-1 pr-2">
                     <div className="text-xs font-black text-gray-900 dark:text-white">{t.game_name}</div>
                     <div className="text-[11px] text-gray-400 font-bold">{t.products?.name}</div>
                     <div className="text-[11px] text-gray-400 font-medium">{formatDate(t.created_at)}</div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div className="text-xs font-black text-gray-900 dark:text-white">{t.price?.toLocaleString()} ກີບ</div>
-                      <div className="text-[10px] text-gray-400"><StatusBadge status={t.status} /></div>
+                  {/* 🛠️ ບ່ອນແກ້ໄຂ: ຈັດ layout ໃຫ້ສະຖານະ ແລະ ລາຄາແຍກກັນຊັດເຈນ ບໍ່ທັບກັນ */}
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex flex-col items-end space-y-1.5">
+                      <span className="text-xs font-black text-gray-900 dark:text-white">{t.price?.toLocaleString()} ກີບ</span>
+                      <StatusBadge status={t.status} />
                     </div>
                     <button onClick={() => setSelectedItem({ ...t, type: "topup" })} className="p-2 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 text-gray-400 hover:text-blue-600 transition-colors">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -178,14 +205,15 @@ export default function HistoryPage() {
                 <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 text-xs">ຍັງບໍ່ມີປະຫວັດການຊື້ລະຫັດ</div>
               ) : codes.map((c) => (
                 <div key={c.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800/60 flex items-center justify-between hover:shadow-md transition-all duration-200">
-                  <div className="space-y-1">
+                  <div className="space-y-1 pr-2">
                     <div className="text-xs font-black text-gray-900 dark:text-white">{c.products?.name}</div>
                     <div className="text-[11px] text-gray-400 font-medium">{formatDate(c.created_at)}</div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div className="text-xs font-black text-gray-900 dark:text-white">{c.price?.toLocaleString()} ກີບ</div>
-                      <div className="text-[10px] text-gray-400"><StatusBadge status={c.status} /></div>
+                  {/* 🛠️ ບ່ອນແກ້ໄຂ: ຈັດ layout ໃຫ້ສະຖານະ ແລະ ລາຄາແຍກກັນຊັດເຈນ ບໍ່ທັບກັນ */}
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex flex-col items-end space-y-1.5">
+                      <span className="text-xs font-black text-gray-900 dark:text-white">{c.price?.toLocaleString()} ກີບ</span>
+                      <StatusBadge status={c.status} />
                     </div>
                     <button onClick={() => setSelectedItem({ ...c, type: "code" })} className="p-2 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 text-gray-400 hover:text-blue-600 transition-colors">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -199,7 +227,7 @@ export default function HistoryPage() {
         )}
       </div>
 
-      {/* ==================== POPUP MODAL (ລາຍລະອຽດກາງຈໍ) ==================== */}
+      {/* POPUP MODAL */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedItem(null)}></div>
@@ -213,22 +241,20 @@ export default function HistoryPage() {
 
             <div className="py-5 space-y-4 text-xs">
               
-              {/* ລາຍລະອຽດເຕີມເງິນ */}
               {selectedItem.type === "deposit" && (
                 <>
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">ປະເພດ:</span> <span className="font-bold text-gray-900 dark:text-white">ເຕີມເງິນ</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400 font-medium">ຊ່ອງທາງ:</span> <span className="font-bold text-gray-900 dark:text-white"><MethodLabel method={selectedItem.method} /></span></div>
+                  <div className="flex justify-between"><span className="text-gray-400 font-medium">ຊ່ອງທາງ:</span> <span className="font-bold text-gray-900 dark:text-white"><PureMethodLabel method={selectedItem.method} /></span></div>
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">ຈຳນວນທີ່ແຈ້ງເຕີມ:</span> <span className="font-black text-blue-600 dark:text-blue-400">{selectedItem.amount_requested?.toLocaleString()} ກີບ</span></div>
                   {selectedItem.fee_percent > 0 && (
                     <>
-                      <div className="flex justify-between"><span className="text-gray-400 font-medium">ค່າຍທຳນຽມ:</span> <span className="font-bold text-rose-500">{selectedItem.fee_percent}%</span></div>
+                      <div className="flex justify-between"><span className="text-gray-400 font-medium">ຄ່າຍທຳນຽມ:</span> <span className="font-bold text-rose-500">{selectedItem.fee_percent}%</span></div>
                       <div className="flex justify-between"><span className="text-gray-400 font-medium">ເງິນທີ່ຈະໄດ້ຮັບ:</span> <span className="font-black text-emerald-500">{selectedItem.amount_received?.toLocaleString()} ກີບ</span></div>
                     </>
                   )}
                 </>
               )}
 
-              {/* ລາຍລະອຽດເຕີມເກມ */}
               {selectedItem.type === "topup" && (
                 <>
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">ປະເພດ:</span> <span className="font-bold text-gray-900 dark:text-white">ເຕີມເກມ</span></div>
@@ -240,12 +266,11 @@ export default function HistoryPage() {
                 </>
               )}
 
-              {/* ລາຍລະອຽດຊື້ລະຫັດ */}
               {selectedItem.type === "code" && (
                 <>
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">ປະເພດ:</span> <span className="font-bold text-gray-900 dark:text-white">ຊື້ລະຫັດ / ບັດ</span></div>
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">ລາຍການສິນຄ້າ:</span> <span className="font-bold text-gray-900 dark:text-white">{selectedItem.products?.name}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400 font-medium">ລາຄາ:</span> <span className="font-black text-blue-600 dark:text-blue-400">{selectedItem.price?.toLocaleString()} ກີບ</span></div>
+                  <div className="flex justify-between"><span className="text-gray-400 font-medium">ລາຄา:</span> <span className="font-black text-blue-600 dark:text-blue-400">{selectedItem.price?.toLocaleString()} ກີບ</span></div>
                   
                   {selectedItem.status === "success" && (selectedItem.game_codes?.code || selectedItem.game_codes?.acc_username) && (
                     <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2 mt-2">
