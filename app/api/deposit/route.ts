@@ -16,20 +16,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 })
     }
 
-    // ສ້າງ Order ໃຫ້ກົງກັບ Column ແທ້ໃນ Supabase ຂອງທ່ານ
+    // 🔥 ແກ້ໄຂບ່ອນນີ້: ສົ່ງໄປສະເພາະ Column ທີ່ຈຳເປັນ ແລະ ມີຢູ່ແທ້ໃນ Supabase ຂອງເຈົ້າ
     const { data: order, error: orderErr } = await supabaseAdmin
       .from("deposit_orders")
       .insert({
         user_id: userId,
-        amount: amount,          // ປ່ຽນໃຫ້ກົງກັບ Supabase ຂອງທ່ານ
-        status: "pending",
-        bank_name: "Phajay QR Auto",
-        slip_url: null           // ລະບົບອັດຕະໂນມັດຈະບໍ່ມີການແນບສະລິບ
+        amount: amount,
+        status: "pending"
+        // ຕັດ bank_name ແລະ slip_url ອອກ ເພື່ອປ້ອງກັນບໍ່ໃຫ້ມັນຟ້ອງຫາ Column ບໍ່ເຫັນ
       })
       .select().single()
 
     if (orderErr || !order) {
-      console.error("Supabase Error:", orderErr)
+      console.error("Supabase Insert Error:", orderErr)
       return NextResponse.json({ error: "ບໍ່ສາມາດສ້າງບິນໃນລະບົບໄດ້" }, { status: 500 })
     }
 
@@ -42,7 +41,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         amount: amount,
-        order_id: order.id.toString(), // ປ່ຽນເປັນ String ປ້ອງກັນ Error
+        order_id: order.id.toString(),
         description: `Topup Order #${order.id}`
       })
     })
@@ -50,10 +49,12 @@ export async function POST(req: Request) {
     const phajayData = await phajayResponse.json()
 
     if (!phajayResponse.ok) {
+      console.error("Phajay API Error:", phajayData)
       return NextResponse.json({ error: phajayData.message || "Phajay API ຕອບຮັບຜິດພາດ" }, { status: 500 })
     }
 
     // ອັບເດດ transaction_id ທີ່ໄດ້ຈາກ Phajay ກັບຄືນລົງບິນ
+    // (ໝາຍເຫດ: ຕ້ອງແນ່ໃຈວ່າເຈົ້າໄດ້ Run SQL ສ້າງ Column transaction_id ໃນ Supabase ແລ້ວເດີ້)
     await supabaseAdmin
       .from("deposit_orders")
       .update({ transaction_id: phajayData.transaction_id })
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
     })
 
   } catch (error: any) {
+    console.error("Catch Error:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
