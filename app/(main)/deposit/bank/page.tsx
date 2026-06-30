@@ -9,8 +9,8 @@ export default function BankDepositPage() {
   const [amount, setAmount] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [qrString, setQrString] = useState("") // ເກັບຄ່າ QR ຈາກ Phajay
-  const [orderId, setOrderId] = useState("")
+  const [qrString, setQrString] = useState("") 
+  const [orderId, setOrderId] = useState<number | null>(null) // 🎯 ເກັບເປັນຕົວເລກ order_number
   const [userId, setUserId] = useState("")
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function BankDepositPage() {
     loadUser()
   }, [])
 
-  // ລະບົບ Polling ກວດສອບສະຖານະບິນອັດຕະໂນມັດ
+  // 🔄 ລະບົບ Polling ກວດສອບສະຖານະບິນອັດຕະໂນມັດທຸກໆ 4 ວິນາທີ
   useEffect(() => {
     if (!orderId || step !== 2) return
 
@@ -31,23 +31,24 @@ export default function BankDepositPage() {
       const { data: order } = await supabase
         .from("deposit_orders")
         .select("status")
-        .eq("id", orderId)
+        .eq("order_number", orderId) // 🔥 ປ່ຽນມາຄົ້ນຫາດ້ວຍ order_number ແທນ id ເດີມ
         .single()
 
       if (order?.status === "success") {
         clearInterval(interval)
-        setStep(3) // ຖ້າ Webhook ແຈ້ງວ່າຈ່າຍແລ້ວ ໃຫ້ເດັ້ງໄປໜ້າສຳເລັດທັນທີ
+        setStep(3) // 🎉 ເດັ້ງໄປໜ້າເຕີມເງິນສຳເລັດທັນທີ!
       }
-    }, 4000) // ກວດທຸກໆ 4 ວິນາທີ
+    }, 4000) 
 
     return () => clearInterval(interval)
   }, [orderId, step])
 
-  // ຂັ້ນຕອນສ້າງບິນ ແລະ ຂໍ QR Code ຈາກ Phajay ຜ່ານ API ຫຼັງບ້ານຂອງເຮົາ
   async function handleCreateOrder() {
     setError("")
     const num = parseInt(amount)
-    if (!num || num < 3000) return setError("ຂັ້ນຕ່ຳ 3,000 ກີບ")
+    
+    // 🎯 ປ່ຽນໃຫ້ຮອງຮັບຍອດຂັ້ນຕ່ຳ 1 ກີບ ເພື່ອໃຫ້ໃຊ້ Test Key (1-999 ກີບ) ໄດ້
+    if (!num || num < 1) return setError("ขั้นต่ำ 1 กีบ")
     
     setLoading(true)
     try {
@@ -58,10 +59,10 @@ export default function BankDepositPage() {
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "ເກີດຂໍ້ຜິດພາດໃນການສ້າງບິນ")
+      if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการสร้างบิล")
 
-      setQrString(data.qr_string) // ໄດ້ QR String ມາສ້າງ QR Code
-      setOrderId(data.order_id)
+      setQrString(data.qr_string) 
+      setOrderId(data.order_number) // 🔥 🎯 ປ່ຽນມາຮັບ order_number ທີ່ສົ່ງມາຈາກ API ໃຫ້ຖືກຕ້ອງ
       setStep(2)
     } catch (err: any) {
       setError(err.message)
@@ -102,9 +103,9 @@ export default function BankDepositPage() {
         {/* STEP 1: Input Amount */}
         {step === 1 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/5 border border-slate-100 dark:border-slate-800">
-              <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">ເຕີມເງິນອັດຕະໂນມັດ</h2>
-              <p className="text-slate-400 text-sm mb-8 font-medium">ລະບົບສະແກນ QR Code ຕັດຍອດອັດຕະໂນມັດພາຍໃນ 10 ວິນາທີ</p>
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 dark:border-slate-800">
+              <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">เติมเงินอัตโนมัติ</h2>
+              <p className="text-slate-400 text-sm mb-8 font-medium">ระบบสแกน QR Code ตัดยอดอัตโนมัติภายใน 10 วินาที</p>
 
               <div className="space-y-2 mb-8">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Amount (LAK)</label>
@@ -114,7 +115,7 @@ export default function BankDepositPage() {
                     placeholder="0"
                     value={amount}
                     onChange={e => setAmount(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-900 rounded-3xl px-6 py-6 text-3xl font-black text-indigo-600 outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-900 rounded-3xl px-6 py-6 text-3xl font-black text-indigo-600 outline-none transition-all"
                   />
                   <div className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300">₭</div>
                 </div>
@@ -124,15 +125,12 @@ export default function BankDepositPage() {
               <button
                 onClick={handleCreateOrder}
                 disabled={loading || !amount}
-                className="group w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-3xl font-black shadow-xl shadow-indigo-600/20 active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-3"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-3xl font-black shadow-xl active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-3"
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <>
-                    <span>ສ້າງ QR Code ເຕີມເງິນ</span>
-                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                  </>
+                  <span>สร้าง QR Code เติมเงิน</span>
                 )}
               </button>
             </div>
@@ -150,7 +148,6 @@ export default function BankDepositPage() {
 
               <div className="relative group mb-6">
                 <div className="relative bg-white p-4 rounded-3xl border border-slate-100 shadow-sm inline-block">
-                  {/* ເອົາ QR String ມາສ້າງຮູບ QR Code ຜ່ານ API ຟຣີ */}
                   <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrString)}`} 
                     alt="Phajay QR Code" 
@@ -161,13 +158,7 @@ export default function BankDepositPage() {
 
               <div className="inline-flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 px-4 py-2 rounded-full text-xs font-bold mb-6 animate-pulse">
                 <span className="w-2 h-2 bg-amber-500 rounded-full" />
-                ລໍຖ້າການສະແກນໂອນ... ລະບົບຈະອັບເດດອັດຕະໂນມັດ
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-5 text-left text-xs font-medium text-slate-500 space-y-2">
-                <p>• ທ່ານສາມາດໃຊ້ Application ຂອງທຸກທະນາຄານເພື່ອສະແກນໄດ້.</p>
-                <p>• ຫ້າມປ່ຽນແປງຈຳນວນເງິນໃນເວລາໂອນຢ່າງເດັດຂາດ.</p>
-                <p>• ຫຼັງຈາກໂອນສຳເລັດແລ້ວ ຫ້າມປິດໜ້ານີ້ ໃຫ້ລໍຖ້າລະບົບກວດສອບ.</p>
+                รอการสแกนโอน... ระบบจะอัปเดตอัตโนมัติ
               </div>
             </div>
           </div>
@@ -184,14 +175,14 @@ export default function BankDepositPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight">ເຕີມເງິນສຳເລັດ!</h2>
-                <p className="text-slate-400 text-sm font-medium px-4">ລະບົບໄດ້ເພີ່ມຍອດເງິນເຂົ້າໃນບັນຊີຂອງທ່ານຮຽບຮ້ອຍແລ້ວ.</p>
+                <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight">เติมเงินสำเร็จ!</h2>
+                <p className="text-slate-400 text-sm font-medium px-4">ระบบได้เพิ่มยอดเงินเข้าในบัญชีของคุณเรียบร้อยแล้ว.</p>
               </div>
               <button
                 onClick={() => router.push("/shop")}
-                className="w-full bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-5 rounded-3xl font-black active:scale-95 transition-all shadow-xl"
+                className="w-full bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-5 rounded-3xl font-black active:scale-95 transition-all"
               >
-                ກັບສູ່ໜ້າຫຼັກ
+                กลับสู่หน้าหลัก
               </button>
             </div>
           </div>
