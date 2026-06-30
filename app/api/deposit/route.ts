@@ -9,46 +9,48 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { amount, userId } = await req.json()
+    const { amount, userId, bankType } = await req.json() // 🎯 ຮັບຄ່າ bankType ມາ
 
     if (!amount || !userId) {
       return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 })
     }
 
     const parsedAmount = Number(amount)
-    
-    // 🔥 ປັບໃຫ້ຮອງຮັບ 1 ກີບຂຶ້ນໄປ
-    if (isNaN(parsedAmount) || parsedAmount < 1) {
-      return NextResponse.json({ error: "จำนวนเงินต้องมากกว่า 1 กีบ" }, { status: 400 })
+    if (isNaN(parsedAmount) || parsedAmount < 100) {
+      return NextResponse.json({ error: "จำนวนเงินต้องมากกว่า 100 กีบ" }, { status: 400 })
     }
 
-    // 🔥 ໃສ່ຄີຂອງທ່ານຕົງໆ ປ້ອງກັນ Next.js ເອີ້ນອ່ານຟາຍ .env ບໍ່ທັນ
-    const PHAJAY_SECRET_KEY = "$2a$10$nbbZKnP8Pyrw954qHXJkF.LwGUOQDyU9NB/JYVpPbLZ4WUuH6JBmu"
+    // ດຶງຄີ Phajay ຈາກ Environment ທີ່ຜູກບົນ EdgeOne
+    const PHAJAY_SECRET_KEY = process.env.PHAJAY_SECRET_KEY || "$2a$10$nbbZKnP8Pyrw954qHXJkF.LwGUOQDyU9NB/JYVpPbLZ4WUuH6JBmu"
 
-    // 1. ບັນທຶກບິນລົງ Supabase
+    // 1. ບັງຄັບບັນທຶກບິນລົງ Supabase ກ່ອນ
     const { data: order, error: orderErr } = await supabaseAdmin
       .from("deposit_orders")
       .insert({
         user_id: userId,
         amount_requested: parsedAmount,
         status: "pending",
-        method: "bank"
+        method: bankType || "bank" // ເກັບປະເພດທະນາຄານລົງ DB
       })
       .select("id, order_number").single()
 
     if (orderErr || !order) {
-      console.error("Supabase Insert Error:", orderErr)
       return NextResponse.json({ error: `Supabase ผิดพลาด: ${orderErr?.message}` }, { status: 500 })
     }
 
-    // 2. 🚀 ຍິງຫາ Phajay API (ເວີຊັນ Production ຕົວຈິງ ຕາມທີ່ວິດີໂອບອກ)
+    // 🎯 2. ສະຫຼັບ URL ຕາມທะນາຄານທີ່ເລືອກ
+    let phajayUrl = "https://payment-gateway.phajay.co/v1/api/payment/generate-bcel-qr" // ມາດຕະຖານ BCEL
+    if (bankType === "ldb") {
+      phajayUrl = "https://payment-gateway.phajay.co/v1/api/payment/generate-ldb-qr" // 🎯 ຖ້າເລືອກ LDB ໃຫ້ຍິງໄປ Endpoint ຂອງ LDB
+    }
+
     try {
       const phajayResponse = await axios({
         method: "post",
-        url: "https://payment-gateway.phajay.co/v1/api/payment/generate-bcel-qr", // 🎯 ໃຊ້ URL ຕົວຈິງເພື່ອແກ້ ENOTFOUND
+        url: phajayUrl,
         data: {
           amount: parsedAmount,
-          description: `OrderNo${order.order_number}` 
+          description: `OrderNo${order.order_number}` // ສົ່ງເລກບິນໄປນຳ ເພື່ອໃຫ້ Webhook ດຶງຄືນໄດ້ຖືກຕ້ອງ
         },
         headers: {
           "Content-Type": "application/json",
@@ -58,7 +60,6 @@ export async function POST(req: Request) {
 
       const phajayData = phajayResponse.data
 
-      // 3. ອັບເດດ transaction_id ທີ່ໄດ້ຈາກ Phajay ລົງ Supabase
       if (phajayData.transactionId) {
         await supabaseAdmin
           .from("deposit_orders")
@@ -66,23 +67,16 @@ export async function POST(req: Request) {
           .eq("id", order.id)
       }
 
-      // 4. ສົ່ງຄ່າ QR ແລະ order_number ກັບໄປຫາ Frontend 🎯
       return NextResponse.json({ 
         success: true, 
-        qr_string: phajayData.qrCode, 
-        order_number: order.order_number // 🔥 ສົ່ງຄ່ານີ້ໄປໃຫ້ page.tsx ເຮັດ Polling ເຊັກສະຖານະ
+        qr_string: phajayData.qrCode || phajayData.qr_string, 
+        order_number: order.order_number
       })
 
     } catch (axiosError: any) {
-      const errResponse = axiosError.response?.data
-      console.error("Axios Phajay Error:", errResponse)
-      return NextResponse.json({ 
-        error: `Phajay ปฏิเสธ: ${errResponse?.message || JSON.stringify(errResponse) || axiosError.message}` 
-      }, { status: 500 })
+      return NextResponse.json({ error: `Phajay ปฏิเสธ: ${axiosError.response?.data?.message || axiosError.message}` }, { status: 500 })
     }
-
   } catch (error: any) {
-    console.error("Catch Error:", error)
     return NextResponse.json({ error: `ระบบหลุด: ${error.message}` }, { status: 500 })
   }
 }

@@ -7,10 +7,11 @@ export default function BankDepositPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [amount, setAmount] = useState("")
+  const [bankType, setBankType] = useState<"bcel" | "ldb">("bcel") // 🎯 ເພີ່ມຕົວແປເລືອກທະນາຄານ
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [qrString, setQrString] = useState("") 
-  const [orderId, setOrderId] = useState<number | null>(null) // 🎯 ເກັບເປັນຕົວເລກ order_number
+  const [orderId, setOrderId] = useState<number | null>(null)
   const [userId, setUserId] = useState("")
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function BankDepositPage() {
     loadUser()
   }, [])
 
-  // 🔄 ລະບົບ Polling ກວດສອບສະຖານະບິນອັດຕະໂນມັດທຸກໆ 4 ວິນາທີ
+  // 🔄 Polling ເຊັກສະຖານະບິນອັດຕະໂນມັດ
   useEffect(() => {
     if (!orderId || step !== 2) return
 
@@ -31,12 +32,12 @@ export default function BankDepositPage() {
       const { data: order } = await supabase
         .from("deposit_orders")
         .select("status")
-        .eq("order_number", orderId) // 🔥 ປ່ຽນມາຄົ້ນຫາດ້ວຍ order_number ແທນ id ເດີມ
+        .eq("order_number", orderId)
         .single()
 
       if (order?.status === "success") {
         clearInterval(interval)
-        setStep(3) // 🎉 ເດັ້ງໄປໜ້າເຕີມເງິນສຳເລັດທັນທີ!
+        setStep(3) // 🎉 ເດັ້ງໄປໜ້າເຕີມເງິນສຳເລັດ!
       }
     }, 4000) 
 
@@ -47,22 +48,21 @@ export default function BankDepositPage() {
     setError("")
     const num = parseInt(amount)
     
-    // 🎯 ປ່ຽນໃຫ້ຮອງຮັບຍອດຂັ້ນຕ່ຳ 1 ກີບ ເພື່ອໃຫ້ໃຊ້ Test Key (1-999 ກີບ) ໄດ້
-    if (!num || num < 1) return setError("ขั้นต่ำ 1 กีบ")
+    if (!num || num < 100) return setError("ขั้นต่ำ 100 กีบ เพื่อให้ธนาคารสแกนได้")
     
     setLoading(true)
     try {
       const res = await fetch("/api/deposit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: num, userId })
+        body: JSON.stringify({ amount: num, userId, bankType }) // 🎯 ສົ່ງ bankType ໄປຫຼັງບ້ານ
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการสร้างบิล")
+      if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาด")
 
       setQrString(data.qr_string) 
-      setOrderId(data.order_number) // 🔥 🎯 ປ່ຽນມາຮັບ order_number ທີ່ສົ່ງມາຈາກ API ໃຫ້ຖືກຕ້ອງ
+      setOrderId(data.order_number)
       setStep(2)
     } catch (err: any) {
       setError(err.message)
@@ -100,19 +100,40 @@ export default function BankDepositPage() {
           ))}
         </div>
 
-        {/* STEP 1: Input Amount */}
+        {/* STEP 1: Input & Select Bank */}
         {step === 1 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 dark:border-slate-800">
               <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">เติมเงินอัตโนมัติ</h2>
-              <p className="text-slate-400 text-sm mb-8 font-medium">ระบบสแกน QR Code ตัดยอดอัตโนมัติภายใน 10 วินาที</p>
+              <p className="text-slate-400 text-sm mb-6 font-medium">ระบบสแกน QR Code ตัดยอดอัตโนมัติภายใน 10 วินาที</p>
+
+              {/* 🎯 ປຸ່ມເລືອກທະນາຄານ */}
+              <div className="space-y-2 mb-6">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">เลือกธนาคาร (Select Bank)</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setBankType("bcel")}
+                    className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${bankType === "bcel" ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20" : "border-slate-200 dark:border-slate-800"}`}
+                  >
+                    <span className="text-lg font-black text-blue-600">BCEL One</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBankType("ldb")}
+                    className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${bankType === "ldb" ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20" : "border-slate-200 dark:border-slate-800"}`}
+                  >
+                    <span className="text-lg font-black text-green-600">LDB Trust</span>
+                  </button>
+                </div>
+              </div>
 
               <div className="space-y-2 mb-8">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Amount (LAK)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">จำนวนเงิน (LAK)</label>
                 <div className="relative group">
                   <input
                     type="number"
-                    placeholder="0"
+                    placeholder="100"
                     value={amount}
                     onChange={e => setAmount(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-900 rounded-3xl px-6 py-6 text-3xl font-black text-indigo-600 outline-none transition-all"
@@ -127,11 +148,7 @@ export default function BankDepositPage() {
                 disabled={loading || !amount}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-3xl font-black shadow-xl active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-3"
               >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <span>สร้าง QR Code เติมเงิน</span>
-                )}
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <span>สร้าง QR Code เติมเงิน</span>}
               </button>
             </div>
           </div>
@@ -141,7 +158,7 @@ export default function BankDepositPage() {
         {step === 2 && (
           <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 dark:border-slate-800 text-center">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total Payment</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">ธนาคาร: <span className="text-indigo-600 uppercase">{bankType}</span></p>
               <h3 className="text-4xl font-black text-slate-800 dark:text-white mb-6">
                 {parseInt(amount).toLocaleString()} <span className="text-sm text-indigo-600">LAK</span>
               </h3>
@@ -158,7 +175,7 @@ export default function BankDepositPage() {
 
               <div className="inline-flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 px-4 py-2 rounded-full text-xs font-bold mb-6 animate-pulse">
                 <span className="w-2 h-2 bg-amber-500 rounded-full" />
-                รอการสแกนโอน... ระบบจะอัปเดตอัตโนมัติ
+                กรุณาสแกนจ่าย... ยอดจะอัปเดตอัตโนมัติ
               </div>
             </div>
           </div>
@@ -178,12 +195,7 @@ export default function BankDepositPage() {
                 <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight">เติมเงินสำเร็จ!</h2>
                 <p className="text-slate-400 text-sm font-medium px-4">ระบบได้เพิ่มยอดเงินเข้าในบัญชีของคุณเรียบร้อยแล้ว.</p>
               </div>
-              <button
-                onClick={() => router.push("/shop")}
-                className="w-full bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-5 rounded-3xl font-black active:scale-95 transition-all"
-              >
-                กลับสู่หน้าหลัก
-              </button>
+              <button onClick={() => router.push("/shop")} className="w-full bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-5 rounded-3xl font-black active:scale-95 transition-all">กลับสู่หน้าหลัก</button>
             </div>
           </div>
         )}
