@@ -5,6 +5,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import ThemeToggle from "@/components/ui/ThemeToggle"
 import AnimatedTitle from "@/components/ui/AnimatedTitle"
+import RecentOrders from "@/components/ui/RecentOrders"
+import TopDonate from "@/components/ui/TopDonate"
 
 export default function ShopPage() {
   const router = useRouter()
@@ -139,6 +141,7 @@ export default function ShopPage() {
         </div>
       </div>
 
+      {/* 🟢 Container ຫຼັກຂອງເນື້ອຫາ */}
       <div className="p-4 space-y-6">
         {/* Banner Carousel */}
         <div className="rounded-2xl overflow-hidden relative">
@@ -251,7 +254,7 @@ export default function ShopPage() {
                     <p className="text-blue-600 dark:text-blue-400 font-bold text-sm">{p.price?.toLocaleString()} ກີບ</p>
                     <div className="flex items-center gap-1">
                       <div className={`w-1.5 h-1.5 rounded-full ${p.stock_left > 0 ? "bg-green-500" : "bg-red-500"}`} />
-                      <span className="text-xs text-gray-400">{p.stock_left > 0 ? `ເຫຼືອ ${p.stock_left}` : "ໝົດ"}</span>
+                      <span className="text-xs text-gray-400">{p.stock_left > 0 ? `เຫຼືอ ${p.stock_left}` : "ໝົດ"}</span>
                     </div>
                     <Link href={`/shop/code/${p.id}`} className="mt-auto">
                       <button disabled={p.stock_left <= 0}
@@ -268,6 +271,13 @@ export default function ShopPage() {
             </div>
           )}
         </div>
+
+        {/* 🎯 [ເພີ່ມໃໝ່] ວາງລາຍການສັ່ງຊື້ ແລະ Top Donate ໄວ້ທາງລຸ່ມສຸດ ພາຍໃນ Div ຫຼັກ */}
+        <div className="pt-4 space-y-6">
+          <RecentOrders />
+          <TopDonate />
+        </div>
+
       </div>
     </div>
   )
