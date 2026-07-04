@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { createClient } from "@/lib/supabase/server"
 import { ToastProvider } from "@/components/ui/Toast"
-
+import FallingParticles from "@/components/ui/FallingParticles"
 async function getSiteSettings() {
   try {
     const supabase = await createClient()
@@ -67,6 +67,7 @@ export default function RootLayout({
         className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white transition-colors"
       >
         <ToastProvider>
+          <FallingParticles />
           {children}
         </ToastProvider>
       </body>
