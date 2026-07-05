@@ -5,8 +5,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import ThemeToggle from "@/components/ui/ThemeToggle"
 import AnimatedTitle from "@/components/ui/AnimatedTitle"
-import RecentOrders from "@/components/ui/RecentOrders"
 import TopDonate from "@/components/ui/TopDonate"
+import LatestPurchaseeLive from "@/components/ui/LatestPurchaseeLive"
 
 export default function ShopPage() {
   const router = useRouter()
@@ -274,7 +274,7 @@ export default function ShopPage() {
 
         {/* 🎯 [ເພີ່ມໃໝ່] ວາງລາຍການສັ່ງຊື້ ແລະ Top Donate ໄວ້ທາງລຸ່ມສຸດ ພາຍໃນ Div ຫຼັກ */}
         <div className="pt-4 space-y-6">
-          <RecentOrders />
+          <LatestPurchaseeLive/>
           <TopDonate />
         </div>
 
