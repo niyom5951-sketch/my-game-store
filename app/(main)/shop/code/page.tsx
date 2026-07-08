@@ -8,38 +8,44 @@ import ThemeToggle from "@/components/ui/ThemeToggle"
 export default function CodeShopPage() {
   const router = useRouter()
   const [products, setProducts] = useState<any[]>([])
-  const [categories, setCategories] = useState<string[]>([]) // ເກັບລາຍຊື່ໝວດໝູ່ເກມທັງໝົດ
-  const [selectedCategory, setSelectedCategory] = useState<string>("all") // ເກັບໝວດໝູ່ທີ່ກຳລັງກົດເລືອກ
+  const [categories, setCategories] = useState<any[]>([]) // ໝວດໝູ່ລະຫັດເກມ (code_categories)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all")
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function load() {
+    async function loadData() {
       const supabase = createClient()
-      const { data } = await supabase
+
+      // 1. ໂຫຼດລາຍຊື່ໝວດໝູ່ລະຫັດເກມທີ່ເປີດໃຊ້ງານຢູ່
+      const { data: categoriesData } = await supabase
+        .from("code_categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order")
+
+      setCategories(categoriesData || [])
+
+      // 2. ໂຫຼດສິນຄ້າລະຫັດ/ໄອດີ ທັງໝົດທີ່ເປີດຂາຍ
+      const { data: productsData } = await supabase
         .from("products")
         .select("*")
         .in("category", ["code", "account"])
         .eq("is_active", true)
         .order("created_at", { ascending: false })
-      
-      const allProducts = data || []
-      setProducts(allProducts)
 
-      // ດຶງລາຍຊື່ game_name ແບບບໍ່ຊ້ຳກັນມາເຮັດເປັນໝວດໝູ່ (ເຊັ່ນ Blox Fruit, Grow a garden)
-      const uniqueCategories: string[] = Array.from(
-        new Set(allProducts.map((p) => p.game_name).filter(Boolean))
-      )
-      setCategories(uniqueCategories)
-      
+      setProducts(productsData || [])
       setLoading(false)
     }
-    load()
+    loadData()
   }, [])
 
-  // ຟັງຊັນກັ່ນຕອງສິນຄ້າຕາມໝວດໝູ່ທີ່ເລືອກ
-  const filteredProducts = selectedCategory === "all"
+  // ຟັງຊັນກັ່ນຕອງສິນຄ້າຕາມ code_category_id ທີ່ເລືອກ
+  const filteredProducts = selectedCategoryId === "all"
     ? products
-    : products.filter(p => p.game_name === selectedCategory)
+    : products.filter(p => p.code_category_id === selectedCategoryId)
+
+  const selectedCategory = categories.find(c => c.id === selectedCategoryId)
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
@@ -55,32 +61,71 @@ export default function CodeShopPage() {
         <ThemeToggle />
       </div>
 
-      {/* 🛠️ ເພີ່ມແຖບເລືອກໝວດໝູ່ເກມ (Game Categories Tab) */}
-      {!loading && products.length > 0 && categories.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800/60 px-4 py-2.5 flex gap-2 overflow-x-auto scrollbar-none sticky top-[53px] z-10">
+      {/* 🛠️ ບລັອກເລືອກໝວດໝູ່ແບບ Dropdown ດຶງຈາກ Table code_categories */}
+      {!loading && categories.length > 0 && (
+        <div className="relative bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800/60 px-4 py-2.5 sticky top-[53px] z-10">
           <button
-            onClick={() => setSelectedCategory("all")}
-            className={`px-4 py-1.5 rounded-full text-xs font-black shrink-0 transition-all ${
-              selectedCategory === "all"
-                ? "bg-blue-600 text-white shadow-sm scale-105"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-            }`}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-black text-gray-700 dark:text-gray-200 transition active:scale-[0.99]"
           >
-            🌟 ທັງໝົດ
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-1.5 rounded-full text-xs font-black shrink-0 transition-all ${
-                selectedCategory === cat
-                  ? "bg-blue-600 text-white shadow-sm scale-105"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-              }`}
+            <span className="flex items-center gap-2 truncate">
+              {selectedCategoryId === "all" ? (
+                <>🌟 ທັງໝົດ</>
+              ) : (
+                <>
+                  {selectedCategory?.icon_url ? (
+                    <img src={selectedCategory.icon_url} alt="" className="w-4 h-4 rounded-full object-cover" />
+                  ) : (
+                    <span>🎮</span>
+                  )}
+                  {selectedCategory?.name}
+                </>
+              )}
+            </span>
+            <svg
+              className={`w-4 h-4 shrink-0 text-gray-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+              fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
             >
-              🎮 {cat}
-            </button>
-          ))}
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {dropdownOpen && (
+            <>
+              {/* ພື້ນຫຼັງໂປ່ງໃສ ກົດເພື່ອປິດ dropdown */}
+              <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+              <div className="absolute left-4 right-4 mt-1.5 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg z-20 max-h-72 overflow-y-auto py-1">
+                <button
+                  onClick={() => { setSelectedCategoryId("all"); setDropdownOpen(false) }}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-2 transition ${
+                    selectedCategoryId === "all"
+                      ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  🌟 ທັງໝົດ
+                </button>
+                {categories.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => { setSelectedCategoryId(c.id); setDropdownOpen(false) }}
+                    className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-2 transition ${
+                      selectedCategoryId === c.id
+                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    {c.icon_url ? (
+                      <img src={c.icon_url} alt="" className="w-4 h-4 rounded-full object-cover" />
+                    ) : (
+                      <span>🎮</span>
+                    )}
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 

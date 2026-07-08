@@ -91,32 +91,32 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
 
   if (loading) {
     return (
-      <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-[28px] p-4 my-6 animate-pulse">
-        <div className="h-4 bg-slate-200 dark:bg-slate-700 w-24 rounded-full mb-4"></div>
-        <div className="h-12 bg-slate-100 dark:bg-slate-800 rounded-2xl w-full"></div>
+      <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 animate-pulse">
+        <div className="h-3.5 bg-slate-200 dark:bg-slate-700 w-20 rounded-full mb-3"></div>
+        <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-full"></div>
       </div>
     );
   }
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-[28px] p-4 overflow-hidden relative select-none my-6 font-custom shadow-sm">
+    <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-3 overflow-hidden relative select-none font-custom shadow-sm">
       
       {/* 📌 ສ່ວນຫົວຂໍ້ + 🔴 ປຸ່ມ LIVE ມຸມຂວາເທິງ */}
-      <div className="w-full flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-2.5">
-        <div className="flex items-center gap-3 flex-1">
-          <span className="font-black text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-700">
+      <div className="w-full flex items-center justify-between mb-2.5 border-b border-slate-100 dark:border-slate-800 pb-2">
+        <div className="flex items-center gap-2 flex-1">
+          <span className="font-black text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-100 dark:border-slate-700">
             ລາຍການຊື້ລ່າສຸດ
           </span>
           <div className="flex-1 h-[1px] bg-slate-100 dark:bg-slate-800/80"></div>
         </div>
         
         {/* 🔥 ປຸ່ມ Live ຂວາເທິງ */}
-        <div className="flex items-center gap-1.5 ml-4 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/40 px-2.5 py-0.5 rounded-full shrink-0">
-          <span className="relative flex h-2 w-2">
+        <div className="flex items-center gap-1.5 ml-3 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/40 px-2 py-0.5 rounded-full shrink-0">
+          <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
           </span>
-          <span className="text-[10px] font-black text-red-600 dark:text-red-400 tracking-wider">LIVE</span>
+          <span className="text-[9px] font-black text-red-600 dark:text-red-400 tracking-wider">LIVE</span>
         </div>
       </div>
 
@@ -143,35 +143,35 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
             return (
               <div
                 key={`${item.id}-${index}`}
-                className="inline-flex items-center gap-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60 px-4 py-2.5 rounded-2xl mx-2 shadow-sm min-w-[310px]"
+                className="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60 px-3 py-2 rounded-xl mx-1.5 shadow-sm min-w-[230px]"
               >
                 <img
                   src={finalImageUrl}
                   alt="product"
-                  className="w-10 h-10 rounded-xl object-cover border border-slate-200/60 dark:border-slate-700 shrink-0 bg-slate-100 p-0.5 shadow-inner"
+                  className="w-7 h-7 rounded-lg object-cover border border-slate-200/60 dark:border-slate-700 shrink-0 bg-slate-100 p-0.5 shadow-inner"
                   onError={(e) => {
                     e.currentTarget.src = "https://img.icons8.com/fluent/100/shopping-bag.png";
                   }}
                 />
 
                 <div className="flex flex-col text-left justify-center leading-tight">
-                  <span className="text-[12px] font-bold text-slate-800 dark:text-slate-100 truncate max-w-[160px]">
+                  <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100 truncate max-w-[120px]">
                     <span
                       className="text-blue-600 dark:text-blue-400 font-medium mr-1"
                       dangerouslySetInnerHTML={{ __html: displayPrefix }}
                     />
                     {item.item_name}
                   </span>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-1">
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
                     ທ່ານ: <span className="text-slate-600 dark:text-slate-300 font-semibold">{item.buyer}</span>
                   </span>
                 </div>
 
-                <div className="ml-auto flex flex-col items-end justify-center pl-3 border-l border-slate-200 dark:border-slate-700">
-                  <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                <div className="ml-auto flex flex-col items-end justify-center pl-2 border-l border-slate-200 dark:border-slate-700">
+                  <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
                     {Number(item.price).toLocaleString()} ₭
                   </span>
-                  <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium tracking-wide mt-1">
+                  <span className="text-[8px] text-slate-400 dark:text-slate-500 font-medium tracking-wide mt-0.5">
                     {new Date(item.created_at).toLocaleTimeString('lo-LA', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -195,7 +195,7 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
         
         .animate-marquee {
           display: flex;
-          animation: marquee 35s linear infinite;
+          animation: marquee 15s linear infinite;
         }
       `}</style>
     </div>

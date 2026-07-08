@@ -14,19 +14,35 @@ export default function CodeDetailPage() {
   const [success, setSuccess] = useState(false)
   const [qty, setQty] = useState(1)
 
+  // ຟັງຊັນສຳລັບໂຫຼດຂໍ້ມູນສິນຄ້າແບບ Join ກັບ Table games ເພື່ອຄວາມຖືກຕ້ອງຂອງຂໍ້ມູນ
+  async function loadProductData(supabase: any) {
+    const { data } = await supabase
+      .from("products")
+      .select(`
+        *,
+        games (
+          name,
+          icon_url
+        )
+      `)
+      .eq("id", params.id)
+      .single()
+    return data
+  }
+
   useEffect(() => {
     async function load() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const [prof, prod] = await Promise.all([
+      const [prof, prodData] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).single(),
-        supabase.from("products").select("*").eq("id", params.id).single()
+        loadProductData(supabase)
       ])
 
       setProfile(prof.data)
-      setProduct(prod.data)
+      setProduct(prodData)
       setLoading(false)
     }
     load()
@@ -71,6 +87,9 @@ export default function CodeDetailPage() {
     </div>
   )
 
+  // ດຶງຊື່ເກມມາຈາກ table games ທີ່ join ມາ (ຖ້າບໍ່ມີໃຫ້ໃຊ້ game_name ຕົວເກົ່າໄປກ່ອນ)
+  const displayGameName = product.games?.name || product.game_name
+
   if (success) return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-xl text-center space-y-5 border border-gray-100 dark:border-gray-800">
@@ -104,13 +123,13 @@ export default function CodeDetailPage() {
             ເບິ່ງປະຫວັດການຊື້
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               setSuccess(false)
               setQty(1)
               setError("")
               const supabase = createClient()
-              supabase.from("products").select("*").eq("id", params.id).single()
-                .then(({ data }) => setProduct(data))
+              const updatedProd = await loadProductData(supabase)
+              if (updatedProd) setProduct(updatedProd)
             }}
             className="w-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-black py-3 rounded-2xl transition active:scale-95 text-xs"
           >
@@ -152,9 +171,9 @@ export default function CodeDetailPage() {
 
         {/* ຊື່ + ໝວດໝູ່ + ລາຄາ */}
         <div className="space-y-1.5 text-center">
-          {product.game_name && (
+          {displayGameName && (
             <span className="inline-block bg-gray-200/60 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-[10px] font-black px-2.5 py-0.5 rounded-md">
-              🎮 ໝວດໝູ່: {product.game_name}
+              🎮 ໝວດໝູ່: {displayGameName}
             </span>
           )}
           <h1 className="text-lg font-black text-gray-900 dark:text-white leading-tight">{product.name}</h1>
@@ -185,10 +204,10 @@ export default function CodeDetailPage() {
           </div>
         )}
 
-        {/* ເລືອກຈຳນວນ */}
+        {/* ເለືອກຈຳນວນ */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800/60 flex items-center justify-between">
           <div>
-            <p className="font-black text-xs text-gray-700 dark:text-gray-300">ຈຳນວນທີ່ຕ້ອງການຊື้</p>
+            <p className="font-black text-xs text-gray-700 dark:text-gray-300">ຈຳນວນທີ່ຕ້ອງການຊື້</p>
             <p className="text-[11px] text-gray-400 font-semibold mt-0.5">ຄົງເຫຼືອໃນຄັງ: {product.stock_left} ອັນ</p>
           </div>
           <div className="flex items-center gap-3">
@@ -247,7 +266,7 @@ export default function CodeDetailPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
-                {product.stock_left <= 0 ? "ສິນຄ້າໝົດຊົ່ວຄາວ" : `ຢືນຢັນການຊື້ (${(product.price * qty).toLocaleString()} ກີບ)`}
+                {product.stock_left <= 0 ? "ສິນค้าໝົດຊົ່ວຄາວ" : `ຢືນຢັນການຊື້ (${(product.price * qty).toLocaleString()} ກີບ)`}
               </>
             )}
           </button>

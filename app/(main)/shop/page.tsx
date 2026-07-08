@@ -146,7 +146,7 @@ export default function ShopPage() {
         {/* Banner Carousel */}
         <div className="rounded-2xl overflow-hidden relative">
           {banners.length > 0 ? (
-            <div className="relative w-full h-44">
+            <div className="relative w-full h-28">
               {banners.map((b, i) => (
                 <div
                   key={b.id}
@@ -154,10 +154,10 @@ export default function ShopPage() {
                 >
                   {b.link_url ? (
                     <a href={b.link_url} target="_blank" rel="noopener noreferrer">
-                      <img src={b.image_url} alt={b.title || "banner"} className="w-full h-44 object-cover" />
+                      <img src={b.image_url} alt={b.title || "banner"} className="w-full h-28 object-cover" />
                     </a>
                   ) : (
-                    <img src={b.image_url} alt={b.title || "banner"} className="w-full h-44 object-cover" />
+                    <img src={b.image_url} alt={b.title || "banner"} className="w-full h-28 object-cover" />
                   )}
                 </div>
               ))}
@@ -176,11 +176,14 @@ export default function ShopPage() {
               )}
             </div>
           ) : (
-            <div className="w-full h-44 bg-gradient-to-r from-blue-600 to-violet-600 flex items-center justify-center rounded-2xl">
-              <p className="text-white font-bold text-2xl tracking-wide">{siteName}</p>
+            <div className="w-full h-28 bg-gradient-to-r from-blue-600 to-violet-600 flex items-center justify-center rounded-2xl">
+              <p className="text-white font-bold text-xl tracking-wide">{siteName}</p>
             </div>
           )}
         </div>
+
+        {/* 🎯 ລາຍການຊື້ລ່າສຸດ (Live) — ວາງຖັດຈາກ Banner ເລີຍ */}
+        <LatestPurchaseeLive />
 
         {/* ເກມຍອດນິຍົມ */}
         <div>
@@ -272,9 +275,8 @@ export default function ShopPage() {
           )}
         </div>
 
-        {/* 🎯 [ເພີ່ມໃໝ່] ວາງລາຍການສັ່ງຊື້ ແລະ Top Donate ໄວ້ທາງລຸ່ມສຸດ ພາຍໃນ Div ຫຼັກ */}
-        <div className="pt-4 space-y-6">
-          <LatestPurchaseeLive/>
+        {/* 🎯 Top Donate ໄວ້ທາງລຸ່ມສຸດ ພາຍໃນ Div ຫຼັກ */}
+        <div className="pt-4">
           <TopDonate />
         </div>
 
