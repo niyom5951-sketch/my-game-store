@@ -14,13 +14,30 @@ type Purchase = {
   image_url: string;
   buyer: string;
   price: number;
+  quantity?: number;
   status: string;
   created_at: string;
 };
 
+function formatRelativePurchaseTime(createdAt: string, now: number) {
+  const created = new Date(createdAt).getTime();
+  if (!Number.isFinite(created)) return "";
+
+  const minutes = Math.max(0, Math.floor((now - created) / 60000));
+  if (minutes < 1) return "ເມື່ອກີ້ນີ້";
+  if (minutes < 60) return `${minutes}ນາທີກ່ອນ`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}ຊົ່ວໂມງກ່ອນ`;
+
+  const days = Math.floor(hours / 24);
+  return `${days}ມື້ກ່ອນ`;
+}
+
 export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clock, setClock] = useState(Date.now());
 
   const loadInitialPurchases = async () => {
     try {
@@ -58,6 +75,8 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
   useEffect(() => {
     loadInitialPurchases();
 
+    const clockTimer = window.setInterval(() => setClock(Date.now()), 60000);
+
     // ຈັບຕາເບິ່ງການປ່ຽນແປງຂໍ້ມູນ (Realtime)
     const channel = supabase
       .channel("purchases-live")
@@ -65,7 +84,8 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "code_orders" },
         (payload) => {
-          if (payload.new.status === "success") fetchAndPrepend(payload.new.id as string);
+          const row = payload.new as { id?: string; order_group_id?: string; status?: string };
+          if (!row.status || row.status === "success") fetchAndPrepend((row.order_group_id || row.id) as string);
         }
       )
       .on(
@@ -85,6 +105,7 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
       .subscribe();
 
     return () => {
+      window.clearInterval(clockTimer);
       supabase.removeChannel(channel);
     };
   }, [limit]);
@@ -128,9 +149,8 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
         /* 🚀 Marquee ແຖບເລື່ອນໄຫຼ */
         <div className="flex whitespace-nowrap animate-marquee hover:[animation-play-state:paused] cursor-pointer">
           {[...purchases, ...purchases].map((item, index) => {
-            
-            // ປ່ຽນຄຳເວົ້າຕາມທີ່ເຈົ້າຕ້ອງການ: "ເຕີມ:" ຫຼື "ຊື້:"
-            const displayPrefix = item.order_type === "topup" ? "<b>ເຕີມ:</b> " : "<b>ຊື້:</b> ";
+            const displayPrefix = item.order_type === "topup" ? "ເຕີມ:" : "ຊື້:";
+            const quantity = Math.max(1, Number(item.quantity || 1));
 
             // ກຳນົດຮູບພາບ Default ຫາກບໍ່ມີໃນລະບົບ
             let finalImageUrl = item.image_url;
@@ -143,7 +163,7 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
             return (
               <div
                 key={`${item.id}-${index}`}
-                className="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60 px-3 py-2 rounded-xl mx-1.5 shadow-sm min-w-[230px]"
+                className="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60 px-3 py-2 rounded-xl mx-1.5 shadow-sm min-w-[250px]"
               >
                 <img
                   src={finalImageUrl}
@@ -155,12 +175,14 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
                 />
 
                 <div className="flex flex-col text-left justify-center leading-tight">
-                  <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100 truncate max-w-[120px]">
-                    <span
-                      className="text-blue-600 dark:text-blue-400 font-medium mr-1"
-                      dangerouslySetInnerHTML={{ __html: displayPrefix }}
-                    />
-                    {item.item_name}
+                  <span className="flex max-w-[145px] items-center gap-1 text-[11px] font-bold text-slate-800 dark:text-slate-100">
+                    <span className="shrink-0 text-blue-600 dark:text-blue-400 font-medium">{displayPrefix}</span>
+                    <span className="truncate">{item.item_name}</span>
+                    {quantity > 1 && (
+                      <span className="shrink-0 rounded-full bg-blue-100 px-1.5 py-0.5 text-[8px] font-black text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                        {quantity} ອັນ
+                      </span>
+                    )}
                   </span>
                   <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
                     ທ່ານ: <span className="text-slate-600 dark:text-slate-300 font-semibold">{item.buyer}</span>
@@ -172,7 +194,7 @@ export default function LatestPurchasesLive({ limit = 12 }: { limit?: number }) 
                     {Number(item.price).toLocaleString()} ₭
                   </span>
                   <span className="text-[8px] text-slate-400 dark:text-slate-500 font-medium tracking-wide mt-0.5">
-                    {new Date(item.created_at).toLocaleTimeString('lo-LA', { hour: '2-digit', minute: '2-digit' })}
+                    {formatRelativePurchaseTime(item.created_at, clock)}
                   </span>
                 </div>
               </div>

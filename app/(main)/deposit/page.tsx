@@ -9,8 +9,8 @@ export default function DepositPage() {
   const menuItems = [
     {
       href: "/deposit/bank",
-      title: "ໂອນຜ່ານທະນາຄານ",
-      desc: "ສ້າງ QR ໂອນເງິນອັດຕະໂນມັດ",
+      title: "ເຕີມເງິນຜ່ານທະນາຄານ",
+      desc: "ສ້າງ QR ແລ້ວລະບົບຈະຈະກວາດສະຖານະຊຳລະເງິນອັດຕະໂນມັດ",
       icon: (
         <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -20,8 +20,8 @@ export default function DepositPage() {
     },
     {
       href: "/deposit/phone",
-      title: "ໂອນຜ່ານບັດໂທ",
-      desc: "ເຕີມເງິນດ້ວຍບັດຕື່ມເງິນ",
+      title: "ເຕີມເງິນຜ່ານການໂອນມູນຄ່າໂທ",
+      desc: "ໂອນມູນຄ່າໂທຜ່ານເລກໂທລະສັບ ແລ້ວລະບົບຈະເຕີມເງິນໃນເວລາ 1-5 ນາທີ",
       icon: (
         <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -32,7 +32,7 @@ export default function DepositPage() {
     {
       href: "/deposit/card", 
       title: "ບັດເຕີມເງິນ",
-      desc: "ເຕີມດ້ວຍເລກບັດ Gift Card",
+      desc: "ເຕີມດ້ວຍເລກບັດ",
       icon: (
         <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -43,7 +43,7 @@ export default function DepositPage() {
     {
       href: "/deposit/code",
       title: "ໃສ່ໂຄ້ດລາງວັນ",
-      desc: "ຮຽກຮັບເງິນຈາກກິດຈະກຳ",
+      desc: "ຮັບເງິນຈາກກິດຈະກຳ",
       icon: (
         <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />

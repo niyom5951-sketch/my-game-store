@@ -62,6 +62,53 @@ export default function HistoryPage() {
     })
   }
 
+  function getOrderStatus(item: any) {
+    return item?.status || "success"
+  }
+
+  function formatOrderQuantity(quantity: any) {
+    const qty = Math.max(1, Number(quantity || 1))
+    return qty > 1 ? `${qty} ອັນ` : ""
+  }
+
+  function getCodeDeliveries(item: any) {
+    if (!item?.game_codes) return []
+    return Array.isArray(item.game_codes) ? item.game_codes.filter(Boolean) : [item.game_codes]
+  }
+
+  function buildCodeOrderGroups(items: any[]) {
+    const grouped = new Map<string, any>()
+
+    items.forEach((item) => {
+      const key = item.order_group_id || item.id
+      const quantity = Math.max(1, Number(item.quantity || 1))
+      const existing = grouped.get(key)
+
+      if (!existing) {
+        grouped.set(key, {
+          ...item,
+          id: key,
+          order_ids: [item.id],
+          quantity,
+          price: Number(item.price || 0),
+          status: getOrderStatus(item),
+          game_codes: item.game_codes ? [item.game_codes] : [],
+        })
+        return
+      }
+
+      existing.order_ids.push(item.id)
+      existing.quantity = Math.max(existing.quantity, quantity, existing.order_ids.length)
+      existing.price += Number(item.price || 0)
+      if (getOrderStatus(item) !== "success") existing.status = getOrderStatus(item)
+      if (item.game_codes) existing.game_codes.push(item.game_codes)
+    })
+
+    return Array.from(grouped.values()).sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+  }
+
   function MethodLabel({ method }: { method: string }) {
     const map: any = {
       bank: "👑 ໂອນຜ່ານທະນາຄານ", // ຖ້າບໍ່ເອົາອີໂມຈິອອກໝົດ ສາມາດລຶບອອກໄດ້ເລີຍເດີ້
@@ -98,6 +145,8 @@ export default function HistoryPage() {
     if(method === "phone_transfer") return <span>ໂອນບັດໂທລະສັບ</span>
     return <span>{map[method] || method}</span>
   }
+
+  const codeOrderGroups = buildCodeOrderGroups(codes)
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white pb-24 transition-colors duration-300">
@@ -201,19 +250,26 @@ export default function HistoryPage() {
 
             {/* 3. ປະຫວັດຊື້ລະຫັດ */}
             {tab === "code" && (
-              codes.length === 0 ? (
+              codeOrderGroups.length === 0 ? (
                 <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 text-xs">ຍັງບໍ່ມີປະຫວັດການຊື້ລະຫັດ</div>
-              ) : codes.map((c) => (
+              ) : codeOrderGroups.map((c) => (
                 <div key={c.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800/60 flex items-center justify-between hover:shadow-md transition-all duration-200">
                   <div className="space-y-1 pr-2">
-                    <div className="text-xs font-black text-gray-900 dark:text-white">{c.products?.name}</div>
+                    <div className="text-xs font-black text-gray-900 dark:text-white">
+                      {c.products?.name}
+                      {formatOrderQuantity(c.quantity) && (
+                        <span className="ml-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
+                          {formatOrderQuantity(c.quantity)}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[11px] text-gray-400 font-medium">{formatDate(c.created_at)}</div>
                   </div>
                   {/* 🛠️ ບ່ອນແກ້ໄຂ: ຈັດ layout ໃຫ້ສະຖານະ ແລະ ລາຄາແຍກກັນຊັດເຈນ ບໍ່ທັບກັນ */}
                   <div className="flex items-center gap-4 shrink-0">
                     <div className="flex flex-col items-end space-y-1.5">
                       <span className="text-xs font-black text-gray-900 dark:text-white">{c.price?.toLocaleString()} ກີບ</span>
-                      <StatusBadge status={c.status} />
+                      <StatusBadge status={getOrderStatus(c)} />
                     </div>
                     <button onClick={() => setSelectedItem({ ...c, type: "code" })} className="p-2 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 text-gray-400 hover:text-blue-600 transition-colors">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -268,11 +324,37 @@ export default function HistoryPage() {
 
               {selectedItem.type === "code" && (
                 <>
+                  {formatOrderQuantity(selectedItem.quantity) && (
+                    <div className="flex justify-between"><span className="text-gray-400 font-medium">ຈຳນວນ:</span> <span className="font-black text-blue-600 dark:text-blue-400">{formatOrderQuantity(selectedItem.quantity)}</span></div>
+                  )}
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">ປະເພດ:</span> <span className="font-bold text-gray-900 dark:text-white">ຊື້ລະຫັດ / ບັດ</span></div>
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">ລາຍການສິນຄ້າ:</span> <span className="font-bold text-gray-900 dark:text-white">{selectedItem.products?.name}</span></div>
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">ລາຄา:</span> <span className="font-black text-blue-600 dark:text-blue-400">{selectedItem.price?.toLocaleString()} ກີບ</span></div>
                   
-                  {selectedItem.status === "success" && (selectedItem.game_codes?.code || selectedItem.game_codes?.acc_username) && (
+                  {getOrderStatus(selectedItem) === "success" && Array.isArray(selectedItem.game_codes) && getCodeDeliveries(selectedItem).length > 0 && (
+                    <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2 mt-2">
+                      <p className="text-[11px] font-bold text-gray-400 border-b border-gray-200/40 pb-1">ຂໍ້ມູນສິນຄ້າທີ່ໄດ້ຮັບ:</p>
+                      {getCodeDeliveries(selectedItem).map((delivery: any, index: number) => (
+                        <div key={`${delivery.id || index}`} className="space-y-1 rounded-xl bg-white p-2 text-[11px] dark:bg-gray-900/60">
+                          <p className="font-black text-gray-400">ອັນທີ {index + 1}</p>
+                          {delivery?.code && (
+                            <div className="flex justify-between items-center gap-2">
+                              <span className="text-gray-400">Code:</span>
+                              <span className="font-mono font-black text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded break-all text-right">{delivery.code}</span>
+                            </div>
+                          )}
+                          {delivery?.acc_username && (
+                            <div className="space-y-1 text-[11px]">
+                              <p className="font-mono text-gray-700 dark:text-gray-300 break-all"><span className="text-gray-400 font-bold">Username:</span> {delivery.acc_username}</p>
+                              <p className="font-mono text-gray-700 dark:text-gray-300 break-all"><span className="text-gray-400 font-bold">Password:</span> {delivery.acc_password}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {getOrderStatus(selectedItem) === "success" && !Array.isArray(selectedItem.game_codes) && (selectedItem.game_codes?.code || selectedItem.game_codes?.acc_username) && (
                     <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2 mt-2">
                       <p className="text-[11px] font-bold text-gray-400 border-b border-gray-200/40 pb-1">ຂໍ້ມູນສິນຄ້າທີ່ໄດ້ຮັບ:</p>
                       {selectedItem.game_codes?.code && (
@@ -294,7 +376,7 @@ export default function HistoryPage() {
 
               <div className="h-px bg-gray-100 dark:bg-gray-800 my-2"></div>
               <div className="flex justify-between"><span className="text-gray-400 font-medium">ວັນທີ ແລະ ເວລາ:</span> <span className="font-bold text-gray-700 dark:text-gray-300">{new Date(selectedItem.created_at).toLocaleString("lo-LA")}</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-400 font-medium">ສະຖານະທຸລະກຳ:</span> <span><StatusBadge status={selectedItem.status} /></span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-400 font-medium">ສະຖານະທຸລະກຳ:</span> <span><StatusBadge status={getOrderStatus(selectedItem)} /></span></div>
             </div>
 
             <button onClick={() => setSelectedItem(null)} className="w-full py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-black rounded-2xl transition-colors text-xs mt-2">
