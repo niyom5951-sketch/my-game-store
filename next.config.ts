@@ -3,30 +3,20 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // ນຳໃຊ້ກັບທຸກໆ Route ໃນເວັບໄຊຕ໌
         source: '/(.*)',
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY', // ຫ້າມບໍ່ໃຫ້ເວັບອື່ນເອົາເວັບເຮົາໄປໃສ່ iframe ເດັດຂາດ
+            value: 'DENY', // ✅ ປ້ອງກັນຄົນເອົາເວັບເຮົາໄປໃສ່ iframe (ໂຕນີ້ປອດໄພ 100% ເວັບບໍ່ໜ່ວງ)
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff', // ປ້ອງກັນການເດົາປະເພດໄຟລ໌
+            value: 'nosniff', // ✅ ບັງຄັບ Browser ອ່ານປະເພດໄຟລ໌ໃຫ້ຖືກຕ້ອງ
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin', // ສົ່ງຂໍ້ມູນເອກະສານອ້າງອີງສະເພາະທີ່ປອດໄພ
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains; preload', // ບັງຄັບ HTTPS ເປັນເວລາ 1 ປີ
-          },
-          {
-            key: 'Content-Security-Policy',
-            // 🎯 ໝາຍເຫດ: ຕ້ອງອະນຸຍາດ supabase ຂອງເຈົ້າ ເພື່ອໃຫ້ດຶງຂໍ້ມູນ ແລະ ຮູບພາບໄດ້
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.supabase.co;",
-          },
+            value: 'strict-origin-when-cross-origin', // ✅ ປ້ອງກັນການຮົ່ວໄຫຼຂອງ URL
+          }
         ],
       },
     ]
