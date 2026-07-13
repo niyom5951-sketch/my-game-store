@@ -13,6 +13,7 @@ export default function ShopPage() {
   const [profile, setProfile] = useState<any>(null)
   const [games, setGames] = useState<any[]>([])
   const [codes, setCodes] = useState<any[]>([])
+  const [orders, setOrders] = useState<any[]>([]) // 🎯 ເພີ່ມ State ເກັບຂໍ້ມູນອໍເດີສັ່ງຊື້
   const [banners, setBanners] = useState<any[]>([])
   const [bannerIndex, setBannerIndex] = useState(0)
   const [showMenu, setShowMenu] = useState(false)
@@ -33,15 +34,17 @@ export default function ShopPage() {
         setProfile(prof)
       }
 
-      const [g, c, b, sn] = await Promise.all([
+      const [g, c, o, b, sn] = await Promise.all([
         supabase.from("games").select("*").eq("is_active", true).order("sort_order"),
         supabase.from("products").select("*").in("category", ["code", "account"]).eq("is_active", true).order("created_at", { ascending: false }),
+        supabase.from("products").select("*").eq("category", "order").eq("is_active", true).order("created_at", { ascending: false }), // 🎯 ດຶງຂໍ້ມູນອໍເດີສັ່ງຊື້
         supabase.from("banners").select("*").eq("is_active", true).order("sort_order"),
         supabase.from("settings").select("value").eq("key", "site_name").maybeSingle()
       ])
 
       setGames(g.data || [])
       setCodes(c.data || [])
+      setOrders(o.data || []) // 🎯 ເກັບຄ່າອໍເດີສັ່ງຊື້
       setBanners(b.data || [])
       if (sn.data?.value) setSiteName(sn.data.value)
     }
@@ -182,7 +185,7 @@ export default function ShopPage() {
           )}
         </div>
 
-        {/* 🎯 ລາຍການຊື້ລ່າສຸດ (Live) — ວາງຖັດຈາກ Banner ເລີຍ */}
+        {/* 🎯 ລາຍການຊື້ລ່າສຸດ (Live) */}
         <LatestPurchaseeLive />
 
         {/* ເກມຍອດນິຍົມ */}
@@ -233,7 +236,7 @@ export default function ShopPage() {
             </Link>
           </div>
           {codes.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 text-sm">ຍັງບໍ່ມີສິນຄ້າ</div>
+            <div className="text-center py-8 text-gray-400 text-sm">ຍັງບໍ່ມີສິນค้า</div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {codes.slice(0, 6).map(p => (
@@ -257,7 +260,7 @@ export default function ShopPage() {
                     <p className="text-blue-600 dark:text-blue-400 font-bold text-sm">{p.price?.toLocaleString()} ກີບ</p>
                     <div className="flex items-center gap-1">
                       <div className={`w-1.5 h-1.5 rounded-full ${p.stock_left > 0 ? "bg-green-500" : "bg-red-500"}`} />
-                      <span className="text-xs text-gray-400">{p.stock_left > 0 ? `เຫຼືอ ${p.stock_left}` : "ໝົດ"}</span>
+                      <span className="text-xs text-gray-400">{p.stock_left > 0 ? `ເຫຼືອ ${p.stock_left}` : "ໝົດ"}</span>
                     </div>
                     <Link href={`/shop/code/${p.id}`} className="mt-auto">
                       <button disabled={p.stock_left <= 0}
@@ -275,7 +278,50 @@ export default function ShopPage() {
           )}
         </div>
 
-        {/* 🎯 Top Donate ໄວ້ທາງລຸ່ມສຸດ ພາຍໃນ Div ຫຼັກ */}
+        {/* 🎯 3. ✨ ເພີ່ມສ່ວນ "ອໍເດີສັ່ງຊື້ & ບໍລິການຍອດນິຍົມ" ໄວ້ຕໍ່ຈາກລະຫັດເກມຍອດນິຍົມ */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="font-bold text-gray-900 dark:text-white text-base">📦 ອໍເດີສັ່ງຊື້ & ບໍລິການຍອດນິຍົມ</p>
+              <p className="text-xs text-gray-400">Popular Order Services</p>
+            </div>
+            <Link href="/shop/order" className="text-sm text-blue-600 dark:text-blue-400 font-semibold">
+              ທັງໝົດ →
+            </Link>
+          </div>
+          {orders.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">ຍັງບໍ່ມີບໍລິການອໍເດີເທື່ອ</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {orders.slice(0, 4).map(o => (
+                <div key={o.id} className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col p-3 justify-between hover:shadow-md transition">
+                  <div>
+                    <div className="w-full aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      {o.image_url ? (
+                        <img src={o.image_url} alt={o.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-2xl font-bold">📦</div>
+                      )}
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      <p className="font-bold text-xs text-gray-900 dark:text-white line-clamp-2">{o.name}</p>
+                      <p className="text-blue-600 dark:text-blue-400 font-extrabold text-sm">{o.price?.toLocaleString()} ກີບ</p>
+                      {o.description && <p className="text-[11px] text-gray-400 line-clamp-2">{o.description}</p>}
+                    </div>
+                  </div>
+                  
+                  <Link href={`/shop/order?id=${o.id}`} className="mt-3">
+                    <button className="w-full bg-blue-600 text-white font-bold py-2 rounded-xl text-xs transition active:scale-95 flex items-center justify-center gap-1 hover:bg-blue-700">
+                     🚀 ສັ່ງຊື້ບໍລິການນີ້
+                    </button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Top Donate ໄວ້ທາງລຸ່ມສຸດ */}
         <div className="pt-4">
           <TopDonate />
         </div>

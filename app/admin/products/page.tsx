@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function AdminProductsPage() {
-  const [tab, setTab] = useState<"topup" | "code">("topup")
+  const [tab, setTab] = useState<"topup" | "code" | "order">("topup")
   const [games, setGames] = useState<any[]>([])
   const [selectedGame, setSelectedGame] = useState<any>(null)
   const [packages, setPackages] = useState<any[]>([])
@@ -12,8 +12,17 @@ export default function AdminProductsPage() {
   const [selectedCodeCategory, setSelectedCodeCategory] = useState<any>(null)
   const [codeProducts, setCodeProducts] = useState<any[]>([])
 
+  // ----------------------------------------------------------------
+  // STATE ສຳລັບ "ອໍເດີສັ່ງຊື້ (Order)"
+  // ----------------------------------------------------------------
+  const [orderProducts, setOrderProducts] = useState<any[]>([])
+  const [showOrderForm, setShowOrderForm] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<any>(null)
+  const [orderForm, setOrderForm] = useState({ name: "", price: "", image_url: "", description: "", stock_left: "99", is_active: true })
+
   const [loading, setLoading] = useState(true)
   const [codeCatLoading, setCodeCatLoading] = useState(true)
+  const [orderLoading, setOrderLoading] = useState(true)
 
   // Modals
   const [showGameForm, setShowGameForm] = useState(false)
@@ -66,9 +75,22 @@ export default function AdminProductsPage() {
     setCodeProducts(data || [])
   }
 
+  async function loadOrderProducts() {
+    setOrderLoading(true)
+    const supabase = createClient()
+    const { data } = await supabase
+      .from("products")
+      .select("*")
+      .eq("category", "order")
+      .order("created_at", { ascending: false })
+    setOrderProducts(data || [])
+    setOrderLoading(false)
+  }
+
   useEffect(() => {
     loadGames()
     loadCodeCategories()
+    loadOrderProducts()
   }, [])
 
   // ==================== GAME HANDLERS ====================
@@ -268,13 +290,63 @@ export default function AdminProductsPage() {
     loadCodeProducts(selectedCodeCategory.id)
   }
 
+  // ==================== ORDER PRODUCT HANDLERS ====================
+  async function handleSaveOrderProduct() {
+    if (!orderForm.name || !orderForm.price) return
+    setSaving(true)
+    const supabase = createClient()
+    const parsedStock = parseInt(orderForm.stock_left) || 0
+
+    const payload = {
+      name: orderForm.name,
+      game_name: orderForm.name, 
+      price: parseFloat(orderForm.price),
+      image_url: orderForm.image_url || null,
+      description: orderForm.description || null,
+      category: "order", 
+      stock_left: parsedStock,
+      stock_total: parsedStock,
+      is_active: orderForm.is_active
+    }
+
+    let error
+    if (editingOrder) {
+      const res = await supabase.from("products").update(payload).eq("id", editingOrder.id)
+      error = res.error
+    } else {
+      const res = await supabase.from("products").insert(payload)
+      error = res.error
+    }
+
+    setSaving(false)
+    if (error) {
+      console.error("handleSaveOrderProduct:", error)
+      alert("ບັນທຶກສິນຄ້າອໍເດີບໍ່ສຳເລັດ:\n" + error.message)
+      return
+    }
+
+    setShowOrderForm(false)
+    setEditingOrder(null)
+    setOrderForm({ name: "", price: "", image_url: "", description: "", stock_left: "99", is_active: true })
+    loadOrderProducts()
+  }
+
+  async function handleDeleteOrderProduct(id: string) {
+    if (!confirm("ต้องการลบสินค้าออเดอร์นี้ใช่หรือไม่?")) return
+    const supabase = createClient()
+    const { error } = await supabase.from("products").delete().eq("id", id)
+    if (error) { alert("ລຶບສິນຄ້າບໍ່ສຳເລັດ:\n" + error.message); return }
+    loadOrderProducts()
+  }
+
   async function handleToggle(table: string, id: string, current: boolean) {
     const supabase = createClient()
     await supabase.from(table).update({ is_active: !current }).eq("id", id)
     if (table === "games") loadGames()
     else if (table === "code_categories") loadCodeCategories()
-    else if (selectedGame) loadPackages(selectedGame.id)
-    else if (selectedCodeCategory) loadCodeProducts(selectedCodeCategory.id)
+    else if (tab === "topup" && selectedGame) loadPackages(selectedGame.id)
+    else if (tab === "code" && selectedCodeCategory) loadCodeProducts(selectedCodeCategory.id)
+    else if (tab === "order") loadOrderProducts()
   }
 
   const inputTypeLabel = (t: string) => {
@@ -298,13 +370,16 @@ export default function AdminProductsPage() {
           className={`px-4 py-2 rounded-xl font-bold text-sm transition ${tab === "code" ? "bg-blue-600 text-white" : "bg-white text-gray-500 border"}`}>
           🔑 ລະຫັດເກມ
         </button>
+        <button onClick={() => setTab("order")}
+          className={`px-4 py-2 rounded-xl font-bold text-sm transition ${tab === "order" ? "bg-blue-600 text-white" : "bg-white text-gray-500 border"}`}>
+          📦 ອໍເດີສັ່ງຊື້
+        </button>
       </div>
 
       {/* ==================== TAB TOPUP ==================== */}
       {tab === "topup" && (
         <div className="space-y-4">
           {!selectedGame ? (
-            // ລາຍການເກມ
             <>
               <div className="flex justify-between items-center">
                 <p className="font-bold text-gray-700">ເກມທັງໝົດ</p>
@@ -355,7 +430,6 @@ export default function AdminProductsPage() {
               )}
             </>
           ) : (
-            // ລາຍການແພັກເກດຂອງເກມ
             <>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -417,7 +491,6 @@ export default function AdminProductsPage() {
       {tab === "code" && (
         <div className="space-y-4">
           {!selectedCodeCategory ? (
-            // ລາຍການໝວດໝູ່
             <>
               <div className="flex justify-between items-center">
                 <p className="font-bold text-gray-700">ໝວດໝູ່ລະຫັດເກມ</p>
@@ -428,7 +501,7 @@ export default function AdminProductsPage() {
               </div>
               {codeCatError && (
                 <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3">
-                  ໂຫຼດຂໍ້ມູນບໍ່ສຳເລັດ: {codeCatError}
+                  ໂຫລດຂໍ້ມູນບໍ່ສຳເລັດ: {codeCatError}
                 </div>
               )}
               {codeCatLoading ? (
@@ -474,7 +547,6 @@ export default function AdminProductsPage() {
               )}
             </>
           ) : (
-            // ລາຍການສິນຄ້າໃນໝວດໝູ່
             <>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -485,13 +557,13 @@ export default function AdminProductsPage() {
                 </div>
                 <button onClick={() => { setEditingCode(null); setCodeForm({ name: "", price: "", image_url: "", description: "", is_active: true }); setShowCodeForm(true) }}
                   className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold">
-                  + ເພີ່ມສິນຄ້າ
+                  + ເ增ເພີ່ມສິນຄ້າ
                 </button>
               </div>
 
               {codeProductError && (
                 <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3">
-                  ໂຫຼດຂໍ້ມູນບໍ່ສຳເລັດ: {codeProductError}
+                  ໂຫລດຂໍ້ມູນບໍ່ສຳເລັດ: {codeProductError}
                 </div>
               )}
 
@@ -540,6 +612,85 @@ export default function AdminProductsPage() {
                 </div>
               )}
             </>
+          )}
+        </div>
+      )}
+
+      {/* ==================== TAB ORDER ==================== */}
+      {tab === "order" && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="font-bold text-gray-700">ລາຍການສິນຄ້າອໍເດີທັງໝົດ</p>
+            <button 
+              onClick={() => { 
+                setEditingOrder(null); 
+                setOrderForm({ name: "", price: "", image_url: "", description: "", stock_left: "99", is_active: true }); 
+                setShowOrderForm(true) 
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold"
+            >
+              + ເພີ່ມສິນຄ້າອໍເດີ
+            </button>
+          </div>
+
+          {orderLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : orderProducts.length === 0 ? (
+            <div className="bg-white rounded-2xl p-10 text-center text-gray-400 border border-dashed">
+              ຍັງບໍ່ມີສິນຄ້າປະເພດอໍເດີ
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {orderProducts.map(p => (
+                <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border flex flex-col justify-between">
+                  <div className="flex gap-4">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                      {p.image_url ? (
+                        <img src={p.image_url} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-amber-500 flex items-center justify-center text-white text-xs font-bold">📦</div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-800">{p.name}</p>
+                      <p className="text-blue-600 font-bold text-sm mt-0.5">{p.price?.toLocaleString()} ກີບ</p>
+                      {p.description && <p className="text-xs text-gray-400 mt-1 line-clamp-1">{p.description}</p>}
+                      <p className="text-xs font-semibold text-gray-500 mt-1">ສະຕ໋ອກ: {p.stock_left} ຊິ້ນ</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-4 border-t pt-3">
+                    <button onClick={() => handleToggle("products", p.id, p.is_active)}
+                      className={`flex-1 py-1.5 rounded-xl text-xs font-bold ${p.is_active ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                      {p.is_active ? "ເປີດ" : "ປິດ"}
+                    </button>
+                    <button 
+                      onClick={() => { 
+                        setEditingOrder(p); 
+                        setOrderForm({ 
+                          name: p.name, 
+                          price: p.price?.toString(), 
+                          image_url: p.image_url || "", 
+                          description: p.description || "", 
+                          stock_left: p.stock_left?.toString() || "99",
+                          is_active: p.is_active 
+                        }); 
+                        setShowOrderForm(true) 
+                      }}
+                      className="flex-1 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-600"
+                    >
+                      ແກ้ໄຂ
+                    </button>
+                    <button onClick={() => handleDeleteOrderProduct(p.id)}
+                      className="flex-1 py-1.5 rounded-xl text-xs font-bold bg-red-50 text-red-500">
+                      ລຶບ
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -654,7 +805,7 @@ export default function AdminProductsPage() {
                 className="py-3 rounded-xl bg-gray-100 text-gray-600 font-bold">ຍົກເລີກ</button>
               <button onClick={handleSaveCodeCategory} disabled={saving}
                 className="py-3 rounded-xl bg-blue-600 text-white font-bold disabled:opacity-50">
-                {saving ? "ກຳລັງບັນທຶກ..." : "ຢືນຢັນ"}
+                {saving ? "ກຳລັງบันทึก..." : "ຢືນຢັນ"}
               </button>
             </div>
           </div>
@@ -687,7 +838,7 @@ export default function AdminProductsPage() {
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={codeForm.is_active}
                 onChange={e => setCodeForm({ ...codeForm, is_active: e.target.checked })} />
-              <span className="text-sm">ເປີດໃຊ້ງານ</span>
+              <span className="text-sm">\u0ec0\u0e9b\u0eb5\u0e94\u0ec3\u0e8a\u0ec9\u0e87\u0eb2\u0e99</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setShowCodeForm(false)}
@@ -730,6 +881,72 @@ export default function AdminProductsPage() {
               <button onClick={handleAddCodeStock} disabled={saving}
                 className="py-3 rounded-xl bg-green-600 text-white font-bold disabled:opacity-50">
                 {saving ? "ກຳລັງບັນທຶກ..." : "ເພີ່ມ Stock"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Product Form Modal */}
+      {showOrderForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-4">
+            <h2 className="font-bold text-xl text-gray-800">
+              {editingOrder ? "ແກ້ໄຂສິນຄ້າອໍເດີ" : "ເພີ່ມສິນຄ້າອໍເດີ"}
+            </h2>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">ຊື່ສິນຄ້າ *</label>
+                <input placeholder="ເຊັ່ນ: ບໍລິການຟາມເວລ, ປັ້ມແຮງຄ໌..." value={orderForm.name}
+                  onChange={e => setOrderForm({ ...orderForm, name: e.target.value })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">ລາຄາ (ກີບ) *</label>
+                <input placeholder="ລາຄາ..." type="number" value={orderForm.price}
+                  onChange={e => setOrderForm({ ...orderForm, price: e.target.value })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">ຈຳນວນສະຕ໋ອກ</label>
+                <input placeholder="ຈຳນວນທີ່ມີ..." type="number" value={orderForm.stock_left}
+                  onChange={e => setOrderForm({ ...orderForm, stock_left: e.target.value })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">URL ຮູບພາບ</label>
+                <input placeholder="ວາງລິ້ງຮູບພາບ..." value={orderForm.image_url}
+                  onChange={e => setOrderForm({ ...orderForm, image_url: e.target.value })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">ລາຍລະອຽດສິນຄ້າ</label>
+                <textarea placeholder="ໃສ່ລາຍລະອຽດ ຫຼື ເງື່ອນໄຂ..." value={orderForm.description}
+                  onChange={e => setOrderForm({ ...orderForm, description: e.target.value })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500" rows={3} />
+              </div>
+
+              <label className="flex items-center gap-2 pt-1">
+                <input type="checkbox" checked={orderForm.is_active}
+                  onChange={e => setOrderForm({ ...orderForm, is_active: e.target.checked })} />
+                <span className="text-sm font-semibold text-gray-600">ເປີດໃຊ້ງານທັນທີ</span>
+              </label>
+            </div>
+
+            {orderForm.image_url && (
+              <img src={orderForm.image_url} className="w-16 h-16 rounded-xl object-cover mx-auto border" alt="Preview" />
+            )}
+
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button onClick={() => setShowOrderForm(false)} className="py-2.5 rounded-xl bg-gray-100 text-gray-600 font-bold text-sm">ຍົກເລີກ</button>
+              <button onClick={handleSaveOrderProduct} disabled={saving || !orderForm.name || !orderForm.price}
+                className="py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm disabled:opacity-50">
+                {saving ? "ກຳລັງບັນທຶກ..." : "ບັນທຶກ"}
               </button>
             </div>
           </div>
