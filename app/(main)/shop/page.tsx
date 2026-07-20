@@ -1,6 +1,5 @@
 "use client"
-// 🎯 ຂັ້ນຕອນທີ່ 1: ເພີ່ມບັນທັດນີ້ເພື່ອບັງຄັບໃຫ້ Next.js ດຶງຂໍ້ມູນໃໝ່ຈາກ Supabase ສະເໝີ (ບໍ່ໃຫ້ຕິດ Cache)
-export const dynamic = "force-dynamic" 
+export const dynamic = "force-dynamic" // 🎯 ບັງຄັບໃຫ້ Next.js ດຶງຂໍ້ມູນໃໝ່ສະເໝີ (ແກ້ບັນຫາເວັບຫຼັກບໍ່ຂຶ້ນອໍເດີ)
 
 import { useEffect, useState, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -260,7 +259,7 @@ export default function ShopPage() {
                     <p className="text-blue-600 dark:text-blue-400 font-bold text-sm">{p.price?.toLocaleString()} ກີບ</p>
                     <div className="flex items-center gap-1">
                       <div className={`w-1.5 h-1.5 rounded-full ${p.stock_left > 0 ? "bg-green-500" : "bg-red-500"}`} />
-                      <span className="text-xs text-gray-400">{p.stock_left > 0 ? `ເຫຼືອ ${p.stock_left}` : "ໝົດ"}</span>
+                      <span className="text-xs text-gray-400">{p.stock_left > 0 ? `เຫຼືອ ${p.stock_left}` : "ໝົດ"}</span>
                     </div>
                     <Link href={`/shop/code/${p.id}`} className="mt-auto">
                       <button disabled={p.stock_left <= 0}
@@ -312,7 +311,7 @@ export default function ShopPage() {
                   
                   <Link href={`/shop/order?id=${o.id}`} className="mt-3">
                     <button className="w-full bg-blue-600 text-white font-bold py-2 rounded-xl text-xs transition active:scale-95 flex items-center justify-center gap-1 hover:bg-blue-700">
-                     🚀 ສັ່ງຊື້ບໍລິການນີ້
+                     🚀 ສັ່ງຊື້ບໍລິการນີ້
                     </button>
                   </Link>
                 </div>
