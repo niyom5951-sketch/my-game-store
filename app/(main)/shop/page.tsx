@@ -1,4 +1,7 @@
 "use client"
+// 🎯 ຂັ້ນຕອນທີ່ 1: ເພີ່ມບັນທັດນີ້ເພື່ອບັງຄັບໃຫ້ Next.js ດຶງຂໍ້ມູນໃໝ່ຈາກ Supabase ສະເໝີ (ບໍ່ໃຫ້ຕິດ Cache)
+export const dynamic = "force-dynamic" 
+
 import { useEffect, useState, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
@@ -13,7 +16,7 @@ export default function ShopPage() {
   const [profile, setProfile] = useState<any>(null)
   const [games, setGames] = useState<any[]>([])
   const [codes, setCodes] = useState<any[]>([])
-  const [orders, setOrders] = useState<any[]>([]) // 🎯 ເພີ່ມ State ເກັບຂໍ້ມູນອໍເດີສັ່ງຊື້
+  const [orders, setOrders] = useState<any[]>([])
   const [banners, setBanners] = useState<any[]>([])
   const [bannerIndex, setBannerIndex] = useState(0)
   const [showMenu, setShowMenu] = useState(false)
@@ -37,14 +40,14 @@ export default function ShopPage() {
       const [g, c, o, b, sn] = await Promise.all([
         supabase.from("games").select("*").eq("is_active", true).order("sort_order"),
         supabase.from("products").select("*").in("category", ["code", "account"]).eq("is_active", true).order("created_at", { ascending: false }),
-        supabase.from("products").select("*").eq("category", "order").eq("is_active", true).order("created_at", { ascending: false }), // 🎯 ດຶງຂໍ້ມູນອໍເດີສັ່ງຊື້
+        supabase.from("products").select("*").eq("category", "order").eq("is_active", true).order("created_at", { ascending: false }),
         supabase.from("banners").select("*").eq("is_active", true).order("sort_order"),
         supabase.from("settings").select("value").eq("key", "site_name").maybeSingle()
       ])
 
       setGames(g.data || [])
       setCodes(c.data || [])
-      setOrders(o.data || []) // 🎯 ເກັບຄ່າອໍເດີສັ່ງຊື້
+      setOrders(o.data || [])
       setBanners(b.data || [])
       if (sn.data?.value) setSiteName(sn.data.value)
     }
@@ -144,7 +147,6 @@ export default function ShopPage() {
         </div>
       </div>
 
-      {/* 🟢 Container ຫຼັກຂອງເນື້ອຫາ */}
       <div className="p-4 space-y-6">
         {/* Banner Carousel */}
         <div className="rounded-2xl overflow-hidden relative">
@@ -165,7 +167,6 @@ export default function ShopPage() {
                 </div>
               ))}
 
-              {/* Dots */}
               {banners.length > 1 && (
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                   {banners.map((_, i) => (
@@ -185,7 +186,6 @@ export default function ShopPage() {
           )}
         </div>
 
-        {/* 🎯 ລາຍການຊື້ລ່າສຸດ (Live) */}
         <LatestPurchaseeLive />
 
         {/* ເກມຍອດນິຍົມ */}
@@ -278,7 +278,7 @@ export default function ShopPage() {
           )}
         </div>
 
-        {/* 🎯 3. ✨ ເພີ່ມສ່ວນ "ອໍເດີສັ່ງຊື້ & ບໍລິການຍອດນິຍົມ" ໄວ້ຕໍ່ຈາກລະຫັດເກມຍອດນິຍົມ */}
+        {/* ອໍເດີສັ່ງຊື້ & ບໍລິການຍອດນິຍົມ */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -321,7 +321,6 @@ export default function ShopPage() {
           )}
         </div>
 
-        {/* Top Donate ໄວ້ທາງລຸ່ມສຸດ */}
         <div className="pt-4">
           <TopDonate />
         </div>
